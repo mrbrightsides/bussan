@@ -65,15 +65,6 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Actions */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
-                onClick={onResetData}
-                title="Reset ke Data Sample Awal"
-                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1 border border-white/20 focus:outline-none"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span className="hidden xl:inline">Reset Sample</span>
-              </button>
-
-              <button
                 onClick={onOpenReport}
                 className="px-3 py-2 bg-white text-red-700 hover:bg-red-50 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 focus:outline-none"
               >
