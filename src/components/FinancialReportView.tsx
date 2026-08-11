@@ -390,15 +390,15 @@ export const FinancialReportView: React.FC<FinancialReportViewProps> = ({
           <div className="space-y-12">
             <p>Mengetahui,<br /><strong>Ketua Panitia HUT RI 81</strong></p>
             <div>
-              <p className="font-bold underline">( Pak RT Bambang )</p>
+              <p className="font-bold underline">( Akhmad Khudri )</p>
               <p className="text-[10px] text-slate-500">Green Bussan Village</p>
             </div>
           </div>
 
           <div className="space-y-12">
-            <p>Disusun Oleh,<br /><strong>Bendahara Kegiatan</strong></p>
+            <p>Disusun Oleh,<br /><strong>Pengawas Kegiatan</strong></p>
             <div>
-              <p className="font-bold underline">( Bu Ibu Rina )</p>
+              <p className="font-bold underline">( Tri Sulistyo )</p>
               <p className="text-[10px] text-slate-500">Green Bussan Village</p>
             </div>
           </div>
