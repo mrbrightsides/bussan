@@ -1,0 +1,6 @@
+{
+  "name": "Panitia 17an - Green Bussan Village",
+  "description": "Aplikasi pengelolaan lomba, pendaftaran peserta, donatur, dan rekapitulasi keuangan 17 Agustus Komplek Green Bussan Village.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "app_state": {
+      "title": "AppState",
+      "description": "Global application state for Green Bussan Village 17an event",
+      "type": "object",
+      "properties": {
+        "competitions": {
+          "type": "array",
+          "description": "List of competitions"
+        },
+        "participants": {
+          "type": "array",
+          "description": "List of competition participants"
+        },
+        "donors": {
+          "type": "array",
+          "description": "List of donors"
+        },
+        "expenses": {
+          "type": "array",
+          "description": "List of expenses"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["competitions", "participants", "donors", "expenses"]
+    }
+  }
+}
