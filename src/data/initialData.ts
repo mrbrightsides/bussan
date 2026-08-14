@@ -1,4 +1,5 @@
 import { AppState, Competition, Participant, Donor, Expense } from '../types';
+import { generateKnockoutBracket } from '../utils/bracketGenerator';
 
 const generateCompetitions = (): Competition[] => {
   const comps: Competition[] = [];
@@ -403,10 +404,14 @@ const initialParticipants: Participant[] = [
   { id: 'part-16', name: 'Pak Akhmad Khudri', houseNo: 'Blok A5', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
 ];
 
+const defaultCompetitions = generateCompetitions();
+const defaultGapleComp = defaultCompetitions.find((c) => c.name.toLowerCase().includes('gaple')) || defaultCompetitions[0];
+const initialGapleBracket = generateKnockoutBracket(defaultGapleComp, initialParticipants, '2v2');
+
 export const initialAppData: AppState = {
-  competitions: generateCompetitions(),
+  competitions: defaultCompetitions,
   participants: initialParticipants,
   donors: initialDonors,
   expenses: initialExpenses,
-  brackets: [],
+  brackets: [initialGapleBracket],
 };

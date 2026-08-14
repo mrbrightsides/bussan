@@ -9,6 +9,11 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(defa
 
 const STATE_DOC_REF = doc(db, 'app_state', 'main');
 
+// Deep sanitize helper to eliminate any undefined properties that cause Firestore setDoc to fail
+export function cleanForFirestore<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj, (_, value) => (value === undefined ? null : value)));
+}
+
 export function subscribeToAppState(
   onStateChange: (state: AppState) => void,
   onError?: (err: Error) => void
@@ -19,13 +24,27 @@ export function subscribeToAppState(
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.competitions && data.donors && data.expenses) {
-          onStateChange({
+          // If existing Firestore document doesn't have brackets or has empty brackets, fallback to initial seeded brackets
+          const brackets = (Array.isArray(data.brackets) && data.brackets.length > 0)
+            ? data.brackets
+            : (initialAppData.brackets || []);
+
+          const loadedState: AppState = {
             competitions: data.competitions || [],
             participants: data.participants || [],
             donors: data.donors || [],
             expenses: data.expenses || [],
-            brackets: data.brackets || [],
-          });
+            brackets: brackets,
+          };
+
+          // If Firestore was missing brackets, update Firestore with the merged state
+          if (!data.brackets || (Array.isArray(data.brackets) && data.brackets.length === 0 && brackets.length > 0)) {
+            saveAppStateToFirestore(loadedState).catch((err) => {
+              console.warn('Initial bracket migration to Firestore:', err);
+            });
+          }
+
+          onStateChange(loadedState);
           return;
         }
       }
@@ -44,12 +63,14 @@ export function subscribeToAppState(
 
 export async function saveAppStateToFirestore(state: AppState) {
   try {
+    const cleanState = cleanForFirestore(state);
     await setDoc(STATE_DOC_REF, {
-      ...state,
+      ...cleanState,
       updatedAt: new Date().toISOString(),
     });
+    console.log('✅ State successfully synced to Firestore!');
   } catch (err) {
-    console.error('Error saving state to Firestore:', err);
+    console.error('❌ Error saving state to Firestore:', err);
     throw err;
   }
 }

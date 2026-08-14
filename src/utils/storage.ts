@@ -11,7 +11,10 @@ export function loadAppState(): AppState {
     if (!parsed.competitions || !parsed.participants || !parsed.donors || !parsed.expenses) {
       return initialAppData;
     }
-    return parsed;
+    return {
+      ...parsed,
+      brackets: parsed.brackets && parsed.brackets.length > 0 ? parsed.brackets : (initialAppData.brackets || []),
+    };
   } catch (e) {
     console.error('Failed to parse localStorage, resetting to initial', e);
     return initialAppData;
