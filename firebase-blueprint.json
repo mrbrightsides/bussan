@@ -21,6 +21,10 @@
           "type": "array",
           "description": "List of expenses"
         },
+        "brackets": {
+          "type": "array",
+          "description": "List of tournament brackets"
+        },
         "updatedAt": {
           "type": "string",
           "description": "ISO timestamp of last update"

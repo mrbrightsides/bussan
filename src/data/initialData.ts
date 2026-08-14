@@ -1,4 +1,4 @@
-import { AppState, Competition, Donor, Expense } from '../types';
+import { AppState, Competition, Participant, Donor, Expense } from '../types';
 
 const generateCompetitions = (): Competition[] => {
   const comps: Competition[] = [];
@@ -384,9 +384,29 @@ const initialExpenses: Expense[] = [
   },
 ];
 
+const initialParticipants: Participant[] = [
+  { id: 'part-1', name: 'Pak Hendra', houseNo: 'Blok A1', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-2', name: 'Pak Yudi', houseNo: 'Blok A2', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-3', name: 'Pak Defri', houseNo: 'Blok A3', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-4', name: 'Pak Antonius (Tyo)', houseNo: 'Blok B1', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-5', name: 'Pak Putra', houseNo: 'Blok B2', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-6', name: 'Pak Jeri', houseNo: 'Blok B3', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-7', name: 'Pak Rizal', houseNo: 'Blok B4', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-8', name: 'Pak Angga', houseNo: 'Blok B5', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-9', name: 'Pak Fahri', houseNo: 'Blok C1', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-10', name: 'Pak Jefri', houseNo: 'Blok C2', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-11', name: 'Pak Sapdian', houseNo: 'Blok C3', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-12', name: 'Pak Pandu', houseNo: 'Blok C4', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-13', name: 'Pak Johan', houseNo: 'Blok C5', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-14', name: 'Pak Theofilus', houseNo: 'Blok B13', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-15', name: 'Pak Juna', houseNo: 'Blok A4', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+  { id: 'part-16', name: 'Pak Akhmad Khudri', houseNo: 'Blok A5', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
+];
+
 export const initialAppData: AppState = {
   competitions: generateCompetitions(),
-  participants: [],
+  participants: initialParticipants,
   donors: initialDonors,
   expenses: initialExpenses,
+  brackets: [],
 };

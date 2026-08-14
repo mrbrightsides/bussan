@@ -24,6 +24,7 @@ export function subscribeToAppState(
             participants: data.participants || [],
             donors: data.donors || [],
             expenses: data.expenses || [],
+            brackets: data.brackets || [],
           });
           return;
         }

@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   PlayCircle,
   HelpCircle,
+  Swords,
 } from 'lucide-react';
 import { Competition, Participant, AgeCategory, CompetitionStatus } from '../types';
 
@@ -26,6 +27,7 @@ interface CompetitionsViewProps {
   onDeleteCompetition: (id: string) => void;
   onUpdateStatus: (id: string, status: CompetitionStatus) => void;
   onViewParticipants: (comp: Competition) => void;
+  onViewBracket?: (comp: Competition) => void;
 }
 
 export const CompetitionsView: React.FC<CompetitionsViewProps> = ({
@@ -36,6 +38,7 @@ export const CompetitionsView: React.FC<CompetitionsViewProps> = ({
   onDeleteCompetition,
   onUpdateStatus,
   onViewParticipants,
+  onViewBracket,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -196,29 +199,46 @@ export const CompetitionsView: React.FC<CompetitionsViewProps> = ({
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => onViewParticipants(comp)}
-                    className="flex-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    <span>{registeredCount} Peserta</span>
-                  </button>
+                <div className="border-t border-slate-100 pt-3 flex flex-wrap items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1 flex-1">
+                    <button
+                      onClick={() => onViewParticipants(comp)}
+                      className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>{registeredCount} Peserta</span>
+                    </button>
 
-                  <div className="flex items-center gap-1">
+                    {onViewBracket && (
+                      <button
+                        onClick={() => onViewBracket(comp)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 ${
+                          comp.name.toLowerCase().includes('gaple')
+                            ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-2xs font-extrabold'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                        title="Bagan & Pengacakan Turnamen"
+                      >
+                        <Swords className="w-3.5 h-3.5" />
+                        <span>Bagan</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => onEditCompetition(comp)}
                       title="Edit Lomba"
-                      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onDeleteCompetition(comp.id)}
                       title="Hapus Lomba"
-                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+                      className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

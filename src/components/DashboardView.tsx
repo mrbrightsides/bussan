@@ -17,6 +17,8 @@ import {
   FileSpreadsheet,
   AlertCircle,
   Sparkles,
+  Swords,
+  Shuffle,
 } from 'lucide-react';
 import { AppState, AgeCategory } from '../types';
 import { formatRupiah } from '../utils/formatters';
@@ -59,6 +61,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ state, onNavigate,
     percent: totalExpense > 0 ? Math.round((expenseCategoryMap[cat] / totalExpense) * 100) : 0,
   }));
 
+  const gapleComp = state.competitions.find((c) => c.name.toLowerCase().includes('gaple'));
+  const gapleParticipantsCount = gapleComp
+    ? state.participants.filter((p) => p.competitionId === gapleComp.id).length
+    : 0;
+
   return (
     <div className="space-y-6 pb-12">
       {/* Banner Welcome Green Bussan Village */}
@@ -94,6 +101,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ state, onNavigate,
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Feature Card: Turnamen Bagan Gaple & Sistem Gugur */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-600 to-red-600 rounded-2xl p-4 sm:p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/30">
+            <Swords className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full bg-black/20 text-yellow-200 text-[10px] font-black uppercase">
+                Fitur Baru
+              </span>
+              <span className="text-xs font-bold text-amber-100">
+                Lomba Gaple ({gapleParticipantsCount} Peserta Siap)
+              </span>
+            </div>
+            <h3 className="text-base sm:text-lg font-black mt-0.5 text-white">
+              Bagan Turnamen & Pengocokan Pasangan 2 vs 2
+            </h3>
+            <p className="text-xs text-amber-100">
+              Acak pasangan ganda domino/gaple, buat bagan sistem gugur otomatis, dan catat skor live pertandingan.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onNavigate('brackets')}
+          className="px-4 py-2.5 bg-white text-amber-900 hover:bg-amber-50 rounded-xl text-xs font-black shadow-sm flex items-center gap-2 transition-all shrink-0 active:scale-95"
+        >
+          <Shuffle className="w-4 h-4 text-amber-600" />
+          <span>Buka Bagan Turnamen</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* Top Stat Cards */}

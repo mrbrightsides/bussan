@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppState, Competition, Participant, Donor, Expense, CompetitionStatus } from './types';
+import { AppState, Competition, Participant, Donor, Expense, CompetitionStatus, TournamentBracket } from './types';
 import { loadAppState, saveAppState, resetAppState } from './utils/storage';
 import { subscribeToAppState, saveAppStateToFirestore } from './firebase';
 import { Header } from './components/Header';
@@ -7,6 +7,7 @@ import { TabNav, TabType } from './components/TabNav';
 import { MobileNav } from './components/MobileNav';
 import { DashboardView } from './components/DashboardView';
 import { CompetitionsView } from './components/CompetitionsView';
+import { TournamentBracketView } from './components/TournamentBracketView';
 import { ParticipantsView } from './components/ParticipantsView';
 import { DonorsView } from './components/DonorsView';
 import { ExpensesView } from './components/ExpensesView';
@@ -151,6 +152,32 @@ export default function App() {
     }
   };
 
+  // Handlers for Tournament Brackets
+  const handleSaveBracket = (bracket: TournamentBracket) => {
+    updateAndSaveState((prev) => {
+      const existingBrackets = prev.brackets || [];
+      const index = existingBrackets.findIndex(
+        (b) => b.id === bracket.id || b.competitionId === bracket.competitionId
+      );
+      let newBrackets: TournamentBracket[];
+      if (index >= 0) {
+        newBrackets = existingBrackets.map((b, i) => (i === index ? bracket : b));
+      } else {
+        newBrackets = [bracket, ...existingBrackets];
+      }
+      return { ...prev, brackets: newBrackets };
+    });
+  };
+
+  const handleDeleteBracket = (bracketId: string) => {
+    if (window.confirm('Hapus bagan turnamen ini?')) {
+      updateAndSaveState((prev) => ({
+        ...prev,
+        brackets: (prev.brackets || []).filter((b) => b.id !== bracketId),
+      }));
+    }
+  };
+
   // Reset to default sample data
   const handleResetData = () => {
     if (window.confirm('Kembalikan data ke contoh awal Green Bussan Village? Semua data tambahan saat ini akan direset.')) {
@@ -202,6 +229,7 @@ export default function App() {
           counts={{
             competitions: appState.competitions.length,
             participants: appState.participants.length,
+            brackets: (appState.brackets || []).length,
             donors: appState.donors.length,
             expenses: appState.expenses.length,
           }}
@@ -232,6 +260,18 @@ export default function App() {
               onDeleteCompetition={handleDeleteCompetition}
               onUpdateStatus={handleUpdateCompStatus}
               onViewParticipants={handleViewCompParticipants}
+              onViewBracket={() => setActiveTab('brackets')}
+            />
+          )}
+
+          {activeTab === 'brackets' && (
+            <TournamentBracketView
+              competitions={appState.competitions}
+              participants={appState.participants}
+              brackets={appState.brackets || []}
+              onSaveBracket={handleSaveBracket}
+              onDeleteBracket={handleDeleteBracket}
+              onAddParticipant={handleSaveParticipant}
             />
           )}
 

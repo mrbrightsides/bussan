@@ -57,9 +57,51 @@ export interface Expense {
   receiptNote?: string;
 }
 
+export interface BracketTeam {
+  id: string;
+  name: string; // e.g. "Tim A (Hendra & Yudi)"
+  members: string[]; // ['Hendra', 'Yudi']
+  houseNos?: string[]; // ['Blok A1', 'Blok B3']
+}
+
+export interface BracketMatch {
+  id: string; // e.g. "match-r1-m1"
+  roundIndex: number; // 0 for Round 1 (16 besar / 8 besar), 1 for Semifinal, etc.
+  roundName: string; // "Babak 16 Besar", "Perempat Final", "Semifinal", "Final", "Perebutan Juara 3"
+  matchNumber: number;
+  tableNumber?: number; // Meja 1, Meja 2, dst.
+  team1?: BracketTeam | null;
+  team2?: BracketTeam | null;
+  score1?: number | string;
+  score2?: number | string;
+  winnerTeamId?: string | null;
+  isThirdPlaceMatch?: boolean;
+  nextMatchId?: string; // target match ID for the winner
+  nextMatchSlot?: 1 | 2; // slot 1 (team1) or slot 2 (team2)
+  loserNextMatchId?: string; // for 3rd place match if in semifinal
+  loserNextMatchSlot?: 1 | 2;
+  notes?: string;
+}
+
+export interface TournamentBracket {
+  id: string;
+  competitionId: string;
+  competitionName: string;
+  format: '2v2' | '1v1'; // 2 vs 2 (Gaple) or 1 vs 1
+  totalRounds: number;
+  createdAt: string;
+  updatedAt: string;
+  teams: BracketTeam[];
+  matches: BracketMatch[];
+  championTeamId?: string;
+  runnerUpTeamId?: string;
+  thirdPlaceTeamId?: string;
+}
+
 export interface AppState {
   competitions: Competition[];
   participants: Participant[];
   donors: Donor[];
   expenses: Expense[];
+  brackets?: TournamentBracket[];
 }
