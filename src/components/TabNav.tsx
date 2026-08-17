@@ -70,7 +70,7 @@ export const TabNav: React.FC<TabNavProps> = ({ activeTab, onChangeTab, counts }
     },
     {
       id: 'archive',
-      label: 'Arsip HUT RI Ke-81',
+      label: 'Arsip HUT RI',
       icon: Flag,
       specialColor: true,
     },
