@@ -200,6 +200,79 @@ export interface EmergencyContact {
   icon?: string;
 }
 
+// === KOTAK ASPIRASI & LAPORAN FASILITAS WARGA ===
+export type ReportCategory =
+  | 'Lampu Jalan & Penerangan'
+  | 'Saluran Air & Drainase'
+  | 'Jalan & Paving Block'
+  | 'Kebersihan & Sampah'
+  | 'Keamanan & Portal'
+  | 'Taman & Balai Warga'
+  | 'Saran & Aspirasi'
+  | 'Lainnya';
+
+export type ReportStatus = 'Menunggu Tindakan' | 'Sedang Dikerjakan' | 'Selesai' | 'Ditolak';
+
+export interface FacilityReport {
+  id: string;
+  title: string;
+  category: ReportCategory;
+  description: string;
+  location: string; // e.g. "Depan Blok B4", "Dekat Gapura Masuk"
+  reporterName: string;
+  reporterHouse: string; // e.g. "Blok A2 No. 8"
+  reporterPhone?: string;
+  status: ReportStatus;
+  urgency: 'Biasa' | 'Penting' | 'Darurat';
+  imageUrl?: string;
+  createdAt: string; // ISO string
+  date: string;
+  adminResponse?: string;
+  resolvedAt?: string;
+}
+
+// === KATALOG & PEMINJAMAN INVENTARIS RT ===
+export type InventoryCategory =
+  | 'Tenda & Terpal'
+  | 'Kursi & Meja'
+  | 'Sound System & Pengeras Suara'
+  | 'Alat Kebersihan & Mesin Rumput'
+  | 'Peralatan Masak & Dapur Warga'
+  | 'Perkakas & Pertukangan'
+  | 'Lainnya';
+
+export type InventoryStatus = 'Tersedia' | 'Sedang Dipinjam' | 'Perbaikan / Rusak';
+
+export interface InventoryBorrowRecord {
+  id: string;
+  borrowerName: string;
+  borrowerHouse: string;
+  borrowerPhone: string;
+  quantity: number;
+  borrowDate: string;
+  returnEstimate: string;
+  actualReturnDate?: string;
+  purpose: string;
+  status: 'Aktif Dipinjam' | 'Sudah Dikembalikan';
+}
+
+export interface RTInventoryItem {
+  id: string;
+  name: string;
+  category: InventoryCategory;
+  totalQuantity: number;
+  availableQuantity: number;
+  unit: string; // e.g. "Unit", "Set", "Pcs", "Buah"
+  condition: 'Sangat Baik' | 'Baik' | 'Perlu Perbaikan';
+  storageLocation: string; // e.g. "Gudang Balai Warga RT 01", "Rumah Pak RT (A1)"
+  picName: string; // e.g. "Pak Akhmad Khudri (Ketua RT)"
+  picPhone?: string;
+  imageUrl?: string;
+  description?: string;
+  terms?: string;
+  borrowHistory?: InventoryBorrowRecord[];
+}
+
 export type MarketplaceCategory =
   | 'Kuliner & Makanan'
   | 'Kebutuhan Harian & Gas/Galon'
@@ -279,6 +352,8 @@ export interface AppState {
   events?: CommunityEvent[];
   mediaGallery?: MediaItem[];
   emergencyContacts?: EmergencyContact[];
+  facilityReports?: FacilityReport[];
+  inventoryItems?: RTInventoryItem[];
   marketplace?: MarketplaceItem[];
   rtCash?: RTCashItem[];
   monthlyFees?: MonthlyFeeRecord[];

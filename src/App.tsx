@@ -8,6 +8,8 @@ import {
   EmergencyContact,
   MarketplaceItem,
   RTCashItem,
+  FacilityReport,
+  RTInventoryItem,
   Competition,
   Participant,
   Donor,
@@ -16,7 +18,15 @@ import {
   TournamentBracket,
 } from './types';
 import { loadAppState, saveAppState, resetAppState } from './utils/storage';
-import { sampleDemoPosts, sampleDemoMedia, sampleDemoMarketplace, sampleDemoEvents, initialAppData } from './data/initialData';
+import {
+  sampleDemoPosts,
+  sampleDemoMedia,
+  sampleDemoMarketplace,
+  sampleDemoEvents,
+  sampleDemoFacilityReports,
+  sampleDemoInventoryItems,
+  initialAppData,
+} from './data/initialData';
 import { subscribeToAppState, saveAppStateToFirestore } from './firebase';
 import { Header } from './components/Header';
 import { TabNav, TabType } from './components/TabNav';
@@ -205,6 +215,61 @@ export default function App() {
     updateAndSaveState((prev) => ({
       ...prev,
       emergencyContacts: (prev.emergencyContacts || []).filter((c) => c.id !== id),
+    }));
+  };
+
+  // ==================== FACILITY REPORTS HANDLERS ====================
+  const handleSaveFacilityReport = (report: FacilityReport) => {
+    updateAndSaveState((prev) => {
+      const list = prev.facilityReports || [];
+      const exists = list.some((r) => r.id === report.id);
+      const updated = exists ? list.map((r) => (r.id === report.id ? report : r)) : [report, ...list];
+      return { ...prev, facilityReports: updated };
+    });
+  };
+
+  const handleDeleteFacilityReport = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      facilityReports: (prev.facilityReports || []).filter((r) => r.id !== id),
+    }));
+  };
+
+  const handleClearAllFacilityReports = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      facilityReports: [],
+    }));
+  };
+
+  const handleResetDemoFacilityReports = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      facilityReports: sampleDemoFacilityReports,
+    }));
+  };
+
+  // ==================== RT INVENTORY HANDLERS ====================
+  const handleSaveInventoryItem = (item: RTInventoryItem) => {
+    updateAndSaveState((prev) => {
+      const list = prev.inventoryItems || [];
+      const exists = list.some((i) => i.id === item.id);
+      const updated = exists ? list.map((i) => (i.id === item.id ? item : i)) : [item, ...list];
+      return { ...prev, inventoryItems: updated };
+    });
+  };
+
+  const handleDeleteInventoryItem = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      inventoryItems: (prev.inventoryItems || []).filter((i) => i.id !== id),
+    }));
+  };
+
+  const handleResetDemoInventory = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      inventoryItems: sampleDemoInventoryItems,
     }));
   };
 
@@ -462,6 +527,15 @@ export default function App() {
               contacts={appState.emergencyContacts || []}
               onSaveContact={handleSaveContact}
               onDeleteContact={handleDeleteContact}
+              facilityReports={appState.facilityReports || []}
+              onSaveFacilityReport={handleSaveFacilityReport}
+              onDeleteFacilityReport={handleDeleteFacilityReport}
+              onClearAllFacilityReports={handleClearAllFacilityReports}
+              onResetDemoFacilityReports={handleResetDemoFacilityReports}
+              inventoryItems={appState.inventoryItems || []}
+              onSaveInventoryItem={handleSaveInventoryItem}
+              onDeleteInventoryItem={handleDeleteInventoryItem}
+              onResetDemoInventory={handleResetDemoInventory}
             />
           )}
 

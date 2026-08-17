@@ -29,8 +29,8 @@ export function subscribeToAppState(
             ? data.brackets
             : (initialAppData.brackets || []);
 
-          // Check if clean migration is needed for mediaGallery, marketplace, events & posts to start clean & empty
-          const needsCleanStartMigration = !data.cleanPortalDataVersion || data.cleanPortalDataVersion < 3;
+          // Check if clean migration is needed for mediaGallery, marketplace, events, posts & inventory to start clean & empty
+          const needsCleanStartMigration = !data.cleanPortalDataVersion || data.cleanPortalDataVersion < 4;
 
           const posts = needsCleanStartMigration
             ? []
@@ -47,6 +47,14 @@ export function subscribeToAppState(
           const emergencyContacts = Array.isArray(data.emergencyContacts)
             ? data.emergencyContacts
             : (initialAppData.emergencyContacts || []);
+
+          const facilityReports = needsCleanStartMigration && (!Array.isArray(data.facilityReports) || data.facilityReports.some((r: any) => r.id === 'rep-1'))
+            ? []
+            : (Array.isArray(data.facilityReports) ? data.facilityReports : (initialAppData.facilityReports || []));
+
+          const inventoryItems = needsCleanStartMigration
+            ? []
+            : (Array.isArray(data.inventoryItems) ? data.inventoryItems : (initialAppData.inventoryItems || []));
 
           const marketplace = needsCleanStartMigration
             ? []
@@ -70,6 +78,8 @@ export function subscribeToAppState(
             events,
             mediaGallery,
             emergencyContacts,
+            facilityReports,
+            inventoryItems,
             marketplace,
             rtCash,
             monthlyFees,
@@ -85,12 +95,14 @@ export function subscribeToAppState(
             needsRTCashSync ||
             needsCleanStartMigration ||
             !Array.isArray(data.posts) ||
-            !Array.isArray(data.emergencyContacts)
+            !Array.isArray(data.emergencyContacts) ||
+            !Array.isArray(data.facilityReports) ||
+            !Array.isArray(data.inventoryItems)
           ) {
             saveAppStateToFirestore({
               ...loadedState,
               rtCashVersion: 4,
-              cleanPortalDataVersion: 3,
+              cleanPortalDataVersion: 4,
             } as any).catch((err) => {
               console.warn('Syncing updated state to Firestore:', err);
             });

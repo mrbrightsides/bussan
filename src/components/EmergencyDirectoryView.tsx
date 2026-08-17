@@ -21,15 +21,34 @@ import {
   AlertTriangle,
   X,
   Edit2,
+  Package,
 } from 'lucide-react';
-import { EmergencyContact, EmergencyCategory } from '../types';
+import {
+  EmergencyContact,
+  EmergencyCategory,
+  FacilityReport,
+  RTInventoryItem,
+} from '../types';
 import { ContactModal } from './ContactModal';
+import { FacilityReportsSection } from './FacilityReportsSection';
+import { InventoryBorrowSection } from './InventoryBorrowSection';
 import { createWhatsAppLink } from '../utils/mediaUtils';
 
 interface EmergencyDirectoryViewProps {
   contacts: EmergencyContact[];
   onSaveContact: (contact: EmergencyContact) => void;
   onDeleteContact: (id: string) => void;
+  // Facility Reports
+  facilityReports?: FacilityReport[];
+  onSaveFacilityReport?: (report: FacilityReport) => void;
+  onDeleteFacilityReport?: (id: string) => void;
+  onClearAllFacilityReports?: () => void;
+  onResetDemoFacilityReports?: () => void;
+  // Inventory Items
+  inventoryItems?: RTInventoryItem[];
+  onSaveInventoryItem?: (item: RTInventoryItem) => void;
+  onDeleteInventoryItem?: (id: string) => void;
+  onResetDemoInventory?: () => void;
 }
 
 const CATEGORIES: (EmergencyCategory | 'Semua')[] = [
@@ -47,12 +66,26 @@ export const EmergencyDirectoryView: React.FC<EmergencyDirectoryViewProps> = ({
   contacts,
   onSaveContact,
   onDeleteContact,
+  facilityReports = [],
+  onSaveFacilityReport = () => {},
+  onDeleteFacilityReport = () => {},
+  onClearAllFacilityReports,
+  onResetDemoFacilityReports,
+  inventoryItems = [],
+  onSaveInventoryItem = () => {},
+  onDeleteInventoryItem = () => {},
+  onResetDemoInventory,
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'emergency' | 'facility_reports' | 'inventory'>('emergency');
   const [selectedCategory, setSelectedCategory] = useState<EmergencyCategory | 'Semua'>('Semua');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contactToEdit, setContactToEdit] = useState<EmergencyContact | null>(null);
   const [contactToDelete, setContactToDelete] = useState<EmergencyContact | null>(null);
+
+  const pendingReportsCount = facilityReports.filter(
+    (r) => r.status === 'Menunggu Tindakan' || r.status === 'Sedang Dikerjakan'
+  ).length;
 
   const filteredContacts = contacts.filter((c) => {
     if (!c) return false;
@@ -124,360 +157,442 @@ export const EmergencyDirectoryView: React.FC<EmergencyDirectoryViewProps> = ({
 
   return (
     <div className="space-y-6 pb-16">
-      {/* Top Hero Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 bg-rose-800/80 border border-rose-500/30 text-rose-200 text-xs font-semibold px-3 py-1 rounded-full">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              Direktori Penting Kelurahan Sako & Green Bussan
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Kontak Darurat & Layanan Warga
-            </h1>
-            <p className="text-rose-100/80 text-xs sm:text-sm max-w-xl leading-relaxed">
-              Daftar nomor resmi Kantor Lurah & Camat Sako, Ketua RT 01 (Pak Sulaiman), Polisi 110, Ambulans 119, Damkar Sako, Puskesmas, dan PDAM Tirta Musi Palembang.
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              setContactToEdit(null);
-              setIsModalOpen(true);
-            }}
-            className="self-start md:self-center bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 hover:scale-105 active:scale-95 cursor-pointer"
+      {/* Sub Module Switcher Navigation */}
+      <div className="bg-white rounded-2xl p-1.5 border border-slate-200 shadow-sm flex flex-wrap items-center gap-1.5">
+        <button
+          onClick={() => setActiveSubTab('emergency')}
+          className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeSubTab === 'emergency'
+              ? 'bg-rose-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4" />
+          <span>Kontak Darurat & Layanan</span>
+          <span
+            className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+              activeSubTab === 'emergency'
+                ? 'bg-rose-700 text-rose-100'
+                : 'bg-slate-200 text-slate-700'
+            }`}
           >
-            <Plus className="w-4 h-4" />
-            Tambah Kontak Layanan
-          </button>
-        </div>
+            {contacts.length}
+          </span>
+        </button>
 
-        {/* Quick Dial Top 4 Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10">
-          {/* 1. Ketua RT Sulaiman */}
-          <div className="bg-emerald-950/70 border border-emerald-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
-            <div>
-              <span className="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">
-                Ketua RT 01
-              </span>
-              <p className="text-sm font-black text-white">Pak Sulaiman</p>
-              <p className="text-[11px] text-emerald-200 font-mono">+62 813-6761-3695</p>
-            </div>
-            <div className="flex items-center gap-1.5 pt-1">
-              <a
-                href="tel:+6281367613695"
-                className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
-              >
-                <PhoneCall className="w-3 h-3" />
-                Telp
-              </a>
-              <a
-                href={createWhatsAppLink(
-                  '6281367613695',
-                  'Halo Pak RT Sulaiman, saya warga RT 01 Green Bussan Village ingin konsultasi...'
-                )}
-                target="_blank"
-                rel="noreferrer"
-                className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
-              >
-                <MessageCircle className="w-3 h-3" />
-                WA
-              </a>
-            </div>
-          </div>
+        <button
+          onClick={() => setActiveSubTab('facility_reports')}
+          className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeSubTab === 'facility_reports'
+              ? 'bg-amber-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <AlertTriangle className="w-4 h-4" />
+          <span>Lapor Fasilitas & Aspirasi</span>
+          {pendingReportsCount > 0 && (
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                activeSubTab === 'facility_reports'
+                  ? 'bg-amber-700 text-amber-100'
+                  : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {pendingReportsCount}
+            </span>
+          )}
+        </button>
 
-          {/* 2. Kantor Lurah Sako */}
-          <div className="bg-indigo-950/70 border border-indigo-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
-            <div>
-              <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">
-                Pemerintahan
-              </span>
-              <p className="text-sm font-black text-white">Kantor Lurah Sako</p>
-              <p className="text-[11px] text-indigo-200 font-mono">0711-352271</p>
-            </div>
-            <div className="flex items-center gap-1.5 pt-1">
-              <a
-                href="tel:0711352271"
-                className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
-              >
-                <PhoneCall className="w-3 h-3" />
-                0711-352271
-              </a>
-            </div>
-          </div>
-
-          {/* 3. Damkar Pos Sako */}
-          <div className="bg-rose-950/70 border border-rose-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
-            <div>
-              <span className="text-[10px] text-rose-300 font-bold uppercase tracking-wider flex items-center gap-1">
-                <Flame className="w-3 h-3 text-rose-400" />
-                Damkar Pos Sako
-              </span>
-              <p className="text-sm font-black text-white">Damkar & Evakuasi</p>
-              <p className="text-[11px] text-rose-200 font-mono">0711-822532</p>
-            </div>
-            <div className="flex items-center gap-1.5 pt-1">
-              <a
-                href="tel:0711822532"
-                className="w-full py-1.5 px-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
-              >
-                <PhoneCall className="w-3 h-3" />
-                0711-822532 (24 Jam)
-              </a>
-            </div>
-          </div>
-
-          {/* 4. Polri 110 & Medis 119 */}
-          <div className="bg-blue-950/70 border border-blue-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
-            <div>
-              <span className="text-[10px] text-blue-300 font-bold uppercase tracking-wider">
-                Layanan Bebas Pulsa
-              </span>
-              <p className="text-sm font-black text-white">Polri 110 & Medis 119</p>
-              <p className="text-[11px] text-blue-200">Gawat Darurat Nasional</p>
-            </div>
-            <div className="flex items-center gap-1.5 pt-1">
-              <a
-                href="tel:110"
-                className="flex-1 py-1.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
-                title="Panggil Polisi 110"
-              >
-                <PhoneCall className="w-3 h-3" />
-                Polri 110
-              </a>
-              <a
-                href="tel:119"
-                className="flex-1 py-1.5 px-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
-                title="Panggil Ambulans Medis 119"
-              >
-                <PhoneCall className="w-3 h-3" />
-                Medis 119
-              </a>
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={() => setActiveSubTab('inventory')}
+          className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeSubTab === 'inventory'
+              ? 'bg-emerald-700 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          <span>Peminjaman Inventaris RT</span>
+          <span
+            className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+              activeSubTab === 'inventory'
+                ? 'bg-emerald-800 text-emerald-100'
+                : 'bg-slate-200 text-slate-700'
+            }`}
+          >
+            {inventoryItems.length}
+          </span>
+        </button>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3">
-        <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
-          <div className="relative w-full lg:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Cari kelurahan, damkar, satpam, dokter, PDAM..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none"
-            />
-          </div>
+      {/* Sub-view conditional render */}
+      {activeSubTab === 'facility_reports' ? (
+        <FacilityReportsSection
+          reports={facilityReports}
+          onSaveReport={onSaveFacilityReport}
+          onDeleteReport={onDeleteFacilityReport}
+          onClearAllReports={onClearAllFacilityReports}
+          onResetDemoReports={onResetDemoFacilityReports}
+        />
+      ) : activeSubTab === 'inventory' ? (
+        <InventoryBorrowSection
+          inventoryItems={inventoryItems}
+          onSaveInventoryItem={onSaveInventoryItem}
+          onDeleteInventoryItem={onDeleteInventoryItem}
+          onResetDemoInventory={onResetDemoInventory}
+        />
+      ) : (
+        /* ================= EMERGENCY CONTACTS DIRECTORY VIEW ================= */
+        <div className="space-y-6">
+          {/* Top Hero Banner */}
+          <div className="bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Category Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-1 scrollbar-thin">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-full shrink-0 transition-all cursor-pointer ${
-                  selectedCategory === cat
-                    ? 'bg-rose-600 text-white shadow-sm font-bold'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredContacts.map((contact) => (
-          <div
-            key={contact.id}
-            className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-lg transition-all p-5 flex flex-col justify-between space-y-4 group"
-          >
-            <div className="space-y-3">
-              {/* Category & Hours Tag */}
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${getCategoryHeaderStyle(
-                    contact.category
-                  )}`}
-                >
-                  {getCategoryIcon(contact.category)}
-                  {contact.category}
-                </span>
-
-                <span className="text-[11px] text-slate-500 flex items-center gap-1 shrink-0">
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  {contact.availableHours}
-                </span>
-              </div>
-
-              {/* Title & Role */}
-              <div>
-                <h3 className="font-bold text-base text-slate-900 group-hover:text-rose-700 transition-colors">
-                  {contact.name}
-                </h3>
-                <p className="text-xs text-slate-500 font-medium">{contact.role}</p>
-              </div>
-
-              {/* Phone & Contact Meta Info */}
-              <div className="space-y-1.5 pt-1">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                  <PhoneCall className="w-3.5 h-3.5 text-emerald-600 shrink-0 font-sans" />
-                  <span>{contact.phone}</span>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 bg-rose-800/80 border border-rose-500/30 text-rose-200 text-xs font-semibold px-3 py-1 rounded-full">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Direktori Penting Kelurahan Sako & Green Bussan
                 </div>
-
-                {contact.email && (
-                  <div className="flex items-center gap-2 text-xs text-indigo-700 bg-indigo-50/60 px-3 py-1.5 rounded-lg border border-indigo-100">
-                    <Mail className="w-3.5 h-3.5 shrink-0 text-indigo-500" />
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="hover:underline truncate"
-                    >
-                      {contact.email}
-                    </a>
-                  </div>
-                )}
-
-                {contact.website && (
-                  <div className="flex items-center gap-2 text-xs text-blue-700 bg-blue-50/60 px-3 py-1.5 rounded-lg border border-blue-100">
-                    <Globe className="w-3.5 h-3.5 shrink-0 text-blue-500" />
-                    <a
-                      href={contact.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="hover:underline truncate flex items-center gap-1"
-                    >
-                      {String(contact.website).replace('https://', '')}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                )}
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  Kontak Darurat & Layanan Warga
+                </h1>
+                <p className="text-rose-100/80 text-xs sm:text-sm max-w-xl leading-relaxed">
+                  Daftar nomor resmi Kantor Lurah & Camat Sako, Ketua RT 22 (Pak Sulaiman), Polisi 110, Ambulans 119, Damkar Sako, Puskesmas, dan PDAM Tirta Musi Palembang.
+                </p>
               </div>
 
-              {/* Address (if any) */}
-              {contact.address && (
-                <p className="text-xs text-slate-600 flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
-                  <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                  <span>{contact.address}</span>
-                </p>
-              )}
-
-              {/* Description */}
-              {contact.description && (
-                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
-                  {contact.description}
-                </p>
-              )}
+              <button
+                onClick={() => {
+                  setContactToEdit(null);
+                  setIsModalOpen(true);
+                }}
+                className="self-start md:self-center bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Tambah Kontak Layanan
+              </button>
             </div>
 
-            {/* Action Buttons */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-              <div className="flex items-center space-x-2">
-                <a
-                  href={`tel:${String(contact.phone || '').replace(/[^0-9+]/g, '')}`}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 shadow transition-all"
-                >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  Telepon
-                </a>
-
-                {contact.whatsapp && (
+            {/* Quick Dial Top 4 Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10">
+              {/* 1. Ketua RT Sulaiman */}
+              <div className="bg-emerald-950/70 border border-emerald-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+                <div>
+                  <span className="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">
+                    Ketua RT 22
+                  </span>
+                  <p className="text-sm font-black text-white">Pak Sulaiman</p>
+                  <p className="text-[11px] text-emerald-200 font-mono">+62 813-6761-3695</p>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <a
+                    href="tel:+6281367613695"
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
+                  >
+                    <PhoneCall className="w-3 h-3" />
+                    Telp
+                  </a>
                   <a
                     href={createWhatsAppLink(
-                      contact.whatsapp,
-                      `Halo ${contact.name || 'Bapak/Ibu'}, saya warga komplek Green Bussan ingin menghubungi terkait layanan...`
+                      '6281367613695',
+                      'Halo Pak RT Sulaiman, saya warga RT 01 Green Bussan Village ingin konsultasi...'
                     )}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition-all"
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    WhatsApp
+                    <MessageCircle className="w-3 h-3" />
+                    WA
                   </a>
-                )}
+                </div>
               </div>
 
-              <div className="flex items-center space-x-1 text-xs">
-                <button
-                  onClick={() => {
-                    setContactToEdit(contact);
-                    setIsModalOpen(true);
-                  }}
-                  className="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Edit data kontak"
-                >
-                  <Edit2 className="w-3 h-3" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => {
-                    setContactToDelete(contact);
-                  }}
-                  className="text-slate-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Hapus kontak"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Hapus
-                </button>
+              {/* 2. Kantor Lurah Sako */}
+              <div className="bg-indigo-950/70 border border-indigo-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+                <div>
+                  <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">
+                    Pemerintahan
+                  </span>
+                  <p className="text-sm font-black text-white">Kantor Lurah Sako</p>
+                  <p className="text-[11px] text-indigo-200 font-mono">0711-352271</p>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <a
+                    href="tel:0711352271"
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
+                  >
+                    <PhoneCall className="w-3 h-3" />
+                    0711-352271
+                  </a>
+                </div>
+              </div>
+
+              {/* 3. Damkar Pos Sako */}
+              <div className="bg-rose-950/70 border border-rose-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+                <div>
+                  <span className="text-[10px] text-rose-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-rose-400" />
+                    Damkar Pos Sako
+                  </span>
+                  <p className="text-sm font-black text-white">Damkar & Evakuasi</p>
+                  <p className="text-[11px] text-rose-200 font-mono">0711-822532</p>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <a
+                    href="tel:0711822532"
+                    className="w-full py-1.5 px-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
+                  >
+                    <PhoneCall className="w-3 h-3" />
+                    0711-822532 (24 Jam)
+                  </a>
+                </div>
+              </div>
+
+              {/* 4. Polri 110 & Medis 119 */}
+              <div className="bg-blue-950/70 border border-blue-800/60 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+                <div>
+                  <span className="text-[10px] text-blue-300 font-bold uppercase tracking-wider">
+                    Layanan Bebas Pulsa
+                  </span>
+                  <p className="text-sm font-black text-white">Polri 110 & Medis 119</p>
+                  <p className="text-[11px] text-blue-200">Gawat Darurat Nasional</p>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <a
+                    href="tel:110"
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
+                    title="Panggil Polisi 110"
+                  >
+                    <PhoneCall className="w-3 h-3" />
+                    Polri 110
+                  </a>
+                  <a
+                    href="tel:119"
+                    className="flex-1 py-1.5 px-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow"
+                    title="Panggil Ambulans Medis 119"
+                  >
+                    <PhoneCall className="w-3 h-3" />
+                    Medis 119
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Modal Add / Edit Contact */}
-      <ContactModal
-        key={contactToEdit?.id || (isModalOpen ? 'modal-open-new' : 'modal-closed')}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setContactToEdit(null);
-        }}
-        onSave={onSaveContact}
-        contactToEdit={contactToEdit}
-      />
-
-      {/* In-App Delete Confirmation Modal (Avoids iframe window.confirm blocking) */}
-      {contactToDelete && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5" />
+          {/* Filter & Search Bar */}
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3">
+            <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
+              <div className="relative w-full lg:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Cari kelurahan, damkar, satpam, dokter, PDAM..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full text-xs pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                />
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">Hapus Kontak Layanan?</h3>
-                <p className="text-xs text-slate-500">Tindakan ini akan menghapus kontak dari direktori</p>
+
+              {/* Category Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-1 scrollbar-thin">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-full shrink-0 transition-all cursor-pointer ${
+                      selectedCategory === cat
+                        ? 'bg-rose-600 text-white shadow-sm font-bold'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
-            </div>
-
-            <p className="text-xs text-slate-600 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
-              Apakah Anda yakin ingin menghapus kontak <span className="font-bold text-slate-900">"{contactToDelete.name}"</span> ({contactToDelete.role})?
-            </p>
-
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                onClick={() => setContactToDelete(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Ya, Hapus Kontak
-              </button>
             </div>
           </div>
+
+          {/* Contact Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredContacts.map((contact) => (
+              <div
+                key={contact.id}
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col justify-between"
+              >
+                <div>
+                  {/* Card Header with category badge */}
+                  <div
+                    className={`p-4 border-b flex items-center justify-between ${getCategoryHeaderStyle(
+                      contact.category
+                    )}`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1.5 bg-white rounded-lg shadow-2xs">
+                        {getCategoryIcon(contact.category)}
+                      </div>
+                      <span className="text-xs font-bold">{contact.category}</span>
+                    </div>
+
+                    <div className="flex items-center space-x-1 text-[11px] font-semibold opacity-80">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{contact.availableHours}</span>
+                    </div>
+                  </div>
+
+                  {/* Body details */}
+                  <div className="p-5 space-y-3">
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-base leading-tight">
+                        {contact.name}
+                      </h3>
+                      <p className="text-xs font-bold text-rose-600 mt-0.5">{contact.role}</p>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                      {contact.description}
+                    </p>
+
+                    {/* Meta information tags */}
+                    <div className="space-y-1.5 pt-1 text-xs text-slate-600">
+                      {contact.address && (
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                          <span className="text-[11px] line-clamp-1">{contact.address}</span>
+                        </div>
+                      )}
+                      {contact.email && (
+                        <div className="flex items-center space-x-2">
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <a
+                            href={`mailto:${contact.email}`}
+                            className="text-[11px] text-indigo-600 hover:underline truncate"
+                          >
+                            {contact.email}
+                          </a>
+                        </div>
+                      )}
+                      {contact.website && (
+                        <div className="flex items-center space-x-2">
+                          <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <a
+                            href={contact.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-indigo-600 hover:underline truncate flex items-center gap-1"
+                          >
+                            <span>Kunjungi Website Resmi</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Call & WA buttons */}
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2">
+                    <a
+                      href={`tel:${contact.phone.replace(/[^0-9+]/g, '')}`}
+                      className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    >
+                      <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{contact.phone}</span>
+                    </a>
+
+                    {contact.whatsapp && (
+                      <a
+                        href={createWhatsAppLink(
+                          contact.whatsapp,
+                          `Halo ${contact.name}, saya warga Green Bussan Village ingin berkonsultasi...`
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        WhatsApp
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-1 text-xs">
+                    <button
+                      onClick={() => {
+                        setContactToEdit(contact);
+                        setIsModalOpen(true);
+                      }}
+                      className="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Edit data kontak"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setContactToDelete(contact);
+                      }}
+                      className="text-slate-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Hapus kontak"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Modal Add / Edit Contact */}
+          <ContactModal
+            key={contactToEdit?.id || (isModalOpen ? 'modal-open-new' : 'modal-closed')}
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setContactToEdit(null);
+            }}
+            onSave={onSaveContact}
+            contactToEdit={contactToEdit}
+          />
+
+          {/* In-App Delete Confirmation Modal (Avoids iframe window.confirm blocking) */}
+          {contactToDelete && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 animate-in zoom-in-95 duration-150">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">Hapus Kontak Layanan?</h3>
+                    <p className="text-xs text-slate-500">Tindakan ini akan menghapus kontak dari direktori</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  Apakah Anda yakin ingin menghapus kontak <span className="font-bold text-slate-900">&quot;{contactToDelete.name}&quot;</span> ({contactToDelete.role})?
+                </p>
+
+                <div className="flex items-center justify-end space-x-3">
+                  <button
+                    onClick={() => setContactToDelete(null)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    className="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Ya, Hapus Kontak
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
