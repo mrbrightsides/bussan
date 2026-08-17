@@ -76,6 +76,8 @@ export async function compressImageFile(
   });
 }
 
+export const compressImage = compressImageFile;
+
 /**
  * Extracts YouTube video ID and returns standard iframe embed URL
  */
