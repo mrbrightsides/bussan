@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import {
   FileSpreadsheet,
@@ -34,38 +34,44 @@ export const FinancialReportView: React.FC<FinancialReportViewProps> = ({
   const totalExpense = state.expenses.reduce((sum, e) => sum + e.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  // Generate & Download PDF using html2canvas + jsPDF
+  // Generate & Download PDF using html-to-image + jsPDF (Native browser engine, full oklch & CSS support)
   const handleDownloadPDF = async () => {
     if (!reportRef.current) return;
     setIsGeneratingPDF(true);
 
     try {
       const element = reportRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2, // High resolution
-        useCORS: true,
-        logging: false,
+      const imgData = await toPng(element, {
+        quality: 0.98,
+        pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: true,
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
+      const img = new Image();
+      img.src = imgData;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
       const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgHeight = (img.height * pdfWidth) / img.width;
 
       let heightLeft = imgHeight;
       let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pdfHeight;
 
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pdfHeight;
       }
 

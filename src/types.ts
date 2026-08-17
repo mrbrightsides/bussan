@@ -98,10 +98,194 @@ export interface TournamentBracket {
   thirdPlaceTeamId?: string;
 }
 
+// === KOMUNITAS & PORTAL WARGA GREEN BUSSAN VILLAGE ===
+
+export type PostCategory =
+  | 'Pengumuman RT'
+  | 'Kerja Bakti'
+  | 'Iuran & Kas'
+  | 'Keamanan & Ronda'
+  | 'Sosial & Warga'
+  | 'Kesehatan & Posyandu'
+  | 'Umum';
+
+export interface CommunityPost {
+  id: string;
+  title: string;
+  content: string;
+  category: PostCategory;
+  authorName: string;
+  authorRole: string; // e.g. "Ketua RT 01", "Seksi Keamanan", "Warga Blok B"
+  date: string; // formatted date
+  createdAt: string; // ISO string
+  isPinned?: boolean;
+  images?: string[]; // base64 or URL
+  videoUrl?: string; // youtube / reels url
+  likes?: number;
+  likedByIp?: string[];
+  tags?: string[];
+}
+
+export type EventCategory =
+  | 'Kerja Bakti'
+  | 'Gotong Royong'
+  | 'Rapat RT'
+  | 'Rapat Warga'
+  | 'Senam & Olahraga'
+  | 'Olahraga & Senam'
+  | 'Pengajian / Arisan'
+  | 'Pengajian & Keagamaan'
+  | 'Posyandu'
+  | 'Posyandu & Balita'
+  | 'Sosial & Perayaan'
+  | 'Peringatan Nasional';
+
+export type EventStatus = 'Akan Datang' | 'Sedang Berlangsung' | 'Selesai';
+
+export interface CommunityEvent {
+  id: string;
+  title: string;
+  description: string;
+  category: EventCategory;
+  date: string; // e.g. "24 Agustus 2026"
+  time: string; // e.g. "07:30 - 10:00 WIB"
+  location: string; // e.g. "Lapangan Utama & Saluran Blok A-C"
+  pic?: string; // e.g. "Pak Akhmad Khudri (Ketua RT)"
+  organizer?: string;
+  status: EventStatus;
+  attendeesCount?: number;
+  imageUrl?: string;
+}
+
+export type MediaType = 'photo' | 'video';
+
+export interface MediaItem {
+  id: string;
+  title: string;
+  description?: string;
+  albumName: string; // e.g. "Semarak HUT RI Ke-81", "Kerja Bakti Minggu Pagi", "Senam Sehat & Posyandu"
+  type: MediaType;
+  url: string; // Base64 data or image url or youtube url
+  thumbnailUrl?: string;
+  date: string;
+  uploadedBy: string; // e.g. "Pak Khudri (RT 01)"
+  likes?: number;
+  tags?: string[];
+}
+
+export type EmergencyCategory =
+  | 'Keamanan & Darurat'
+  | 'Pengurus RT/RW'
+  | 'Pemerintahan & Kelurahan'
+  | 'Kesehatan & Medis'
+  | 'Layanan Publik & PDAM'
+  | 'Teknisi & Perbaikan'
+  | 'Kesehatan & Bidan'
+  | 'Kebersihan & Lingkungan';
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  role: string;
+  category: EmergencyCategory;
+  phone: string; // e.g. "0812-3456-7890"
+  whatsapp?: string; // e.g. "6281234567890"
+  email?: string;
+  website?: string;
+  availableHours: string; // e.g. "24 Jam", "07:00 - 21:00 WIB"
+  address?: string;
+  description: string;
+  icon?: string;
+}
+
+export type MarketplaceCategory =
+  | 'Kuliner & Makanan'
+  | 'Kebutuhan Harian & Gas/Galon'
+  | 'Jasa & Laundry'
+  | 'Fashion & Kerajinan'
+  | 'Lainnya';
+
+export interface MarketplaceItem {
+  id: string;
+  title: string;
+  category: MarketplaceCategory;
+  sellerName: string;
+  sellerHouse: string; // e.g. "Blok A3 No. 12"
+  price: string; // e.g. "Rp 15.000 / porsi", "Rp 6.000 / galon"
+  whatsapp: string; // e.g. "6281234567890"
+  imageUrl?: string;
+  description: string;
+  isAvailable: boolean;
+  rating?: number;
+}
+
+export type RTCashType = 'Pemasukan' | 'Pengeluaran';
+
+export type RTCashCategory =
+  | 'Operasional Pos Security & Fasilitas Umum'
+  | 'Gaji Petugas (Security)'
+  | 'Perawatan & Perbaikan Taman'
+  | 'Iuran Warga'
+  | 'Iuran Bulanan Warga'
+  | 'Operasional Satpam'
+  | 'Kebersihan & Sampah'
+  | 'Kas Sampah & Kebersihan'
+  | 'Lampu & Fasilitas'
+  | 'Santunan & Sosial'
+  | 'Dana Sosial'
+  | 'Sumbangan / Donasi Warga'
+  | 'Operasional & Pemeliharaan'
+  | 'Honor Satpam & Petugas Kebersihan'
+  | 'Listrik Lampu Jalan & Pompa Air'
+  | 'Sosial & Santunan'
+  | 'Perbaikan Sarana & Prasarana'
+  | 'Lain-lain';
+
+export interface RTCashItem {
+  id: string;
+  type: RTCashType;
+  title: string;
+  category: RTCashCategory;
+  amount: number;
+  date: string;
+  pic?: string;
+  recordedBy?: string;
+  notes?: string;
+}
+
+export interface MonthlyFeeRecord {
+  no: number;
+  blockHouse: string; // e.g. "A1", "B6", "C5-6", "R6"
+  monthlyFee: number; // e.g. 100000
+  payments: {
+    jan?: number;
+    feb?: number;
+    mar?: number;
+    apr?: number;
+    may?: number;
+    jun?: number;
+    jul?: number;
+  };
+  totalPaid: number;
+  arrears: number; // tunggakan
+  notes?: string; // e.g. "Start April", "Kosong Sejak Februari", "Kantor Developer tidak pernah bayar"
+}
+
 export interface AppState {
+  // Community Portal Modules
+  posts?: CommunityPost[];
+  events?: CommunityEvent[];
+  mediaGallery?: MediaItem[];
+  emergencyContacts?: EmergencyContact[];
+  marketplace?: MarketplaceItem[];
+  rtCash?: RTCashItem[];
+  monthlyFees?: MonthlyFeeRecord[];
+
+  // 17 Agustus Event & Competition Archives
   competitions: Competition[];
   participants: Participant[];
   donors: Donor[];
   expenses: Expense[];
   brackets?: TournamentBracket[];
 }
+

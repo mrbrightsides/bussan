@@ -1,30 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { AppState, Competition, Participant, Donor, Expense, CompetitionStatus, TournamentBracket } from './types';
+import { Heart } from 'lucide-react';
+import {
+  AppState,
+  CommunityPost,
+  CommunityEvent,
+  MediaItem,
+  EmergencyContact,
+  MarketplaceItem,
+  RTCashItem,
+  Competition,
+  Participant,
+  Donor,
+  Expense,
+  CompetitionStatus,
+  TournamentBracket,
+} from './types';
 import { loadAppState, saveAppState, resetAppState } from './utils/storage';
+import { sampleDemoMedia, sampleDemoMarketplace, sampleDemoEvents, initialAppData } from './data/initialData';
 import { subscribeToAppState, saveAppStateToFirestore } from './firebase';
 import { Header } from './components/Header';
 import { TabNav, TabType } from './components/TabNav';
 import { MobileNav } from './components/MobileNav';
-import { DashboardView } from './components/DashboardView';
-import { CompetitionsView } from './components/CompetitionsView';
-import { TournamentBracketView } from './components/TournamentBracketView';
-import { ParticipantsView } from './components/ParticipantsView';
-import { DonorsView } from './components/DonorsView';
-import { ExpensesView } from './components/ExpensesView';
-import { FinancialReportView } from './components/FinancialReportView';
+
+// Community Views
+import { CommunityFeedView } from './components/CommunityFeedView';
+import { MediaGalleryView } from './components/MediaGalleryView';
+import { EventsView } from './components/EventsView';
+import { EmergencyDirectoryView } from './components/EmergencyDirectoryView';
+import { MarketplaceView } from './components/MarketplaceView';
+import { RTCashView } from './components/RTCashView';
+import { AugustArchiveView } from './components/AugustArchiveView';
+
+// Modals for 17an
 import { CompetitionModal } from './components/CompetitionModal';
 import { ParticipantModal } from './components/ParticipantModal';
 import { DonorModal } from './components/DonorModal';
 import { ExpenseModal } from './components/ExpenseModal';
 import { QuickAddModal } from './components/QuickAddModal';
+import { PostModal } from './components/PostModal';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>('feed');
 
-  // Modal States
+  // Fast Action Post Modal
+  const [isHeaderPostOpen, setIsHeaderPostOpen] = useState(false);
+
+  // 17an Modals
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-
   const [isCompModalOpen, setIsCompModalOpen] = useState(false);
   const [compToEdit, setCompToEdit] = useState<Competition | null>(null);
 
@@ -37,8 +60,6 @@ export default function App() {
 
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
-
-  const [selectedCompFilterForParticipants, setSelectedCompFilterForParticipants] = useState<string>('All');
 
   // Subscribe to real-time Firestore updates
   useEffect(() => {
@@ -61,11 +82,175 @@ export default function App() {
     });
   };
 
-  // Financial Totals
-  const totalIncome = appState.donors.reduce((sum, d) => sum + d.amount, 0);
-  const totalExpense = appState.expenses.reduce((sum, e) => sum + e.amount, 0);
+  // ==================== COMMUNITY POSTS HANDLERS ====================
+  const handleSavePost = (post: CommunityPost) => {
+    updateAndSaveState((prev) => {
+      const posts = prev.posts || [];
+      const exists = posts.some((p) => p.id === post.id);
+      const updated = exists ? posts.map((p) => (p.id === post.id ? post : p)) : [post, ...posts];
+      return { ...prev, posts: updated };
+    });
+  };
 
-  // Handlers for Competition
+  const handleDeletePost = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      posts: (prev.posts || []).filter((p) => p.id !== id),
+    }));
+  };
+
+  const handleLikePost = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      posts: (prev.posts || []).map((p) => (p.id === id ? { ...p, likes: (p.likes || 0) + 1 } : p)),
+    }));
+  };
+
+  // ==================== MEDIA GALLERY HANDLERS ====================
+  const handleSaveMedia = (item: MediaItem) => {
+    updateAndSaveState((prev) => {
+      const list = prev.mediaGallery || [];
+      const exists = list.some((m) => m.id === item.id);
+      const updated = exists ? list.map((m) => (m.id === item.id ? item : m)) : [item, ...list];
+      return { ...prev, mediaGallery: updated };
+    });
+  };
+
+  const handleDeleteMedia = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      mediaGallery: (prev.mediaGallery || []).filter((m) => m.id !== id),
+    }));
+  };
+
+  const handleClearAllMedia = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      mediaGallery: [],
+    }));
+  };
+
+  const handleResetDemoMedia = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      mediaGallery: sampleDemoMedia,
+    }));
+  };
+
+  const handleLikeMedia = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      mediaGallery: (prev.mediaGallery || []).map((m) =>
+        m.id === id ? { ...m, likes: (m.likes || 0) + 1 } : m
+      ),
+    }));
+  };
+
+  // ==================== COMMUNITY EVENTS HANDLERS ====================
+  const handleSaveEvent = (event: CommunityEvent) => {
+    updateAndSaveState((prev) => {
+      const list = prev.events || [];
+      const exists = list.some((e) => e.id === event.id);
+      const updated = exists ? list.map((e) => (e.id === event.id ? event : e)) : [event, ...list];
+      return { ...prev, events: updated };
+    });
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      events: (prev.events || []).filter((e) => e.id !== id),
+    }));
+  };
+
+  const handleClearAllEvents = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      events: [],
+    }));
+  };
+
+  const handleResetDemoEvents = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      events: sampleDemoEvents,
+    }));
+  };
+
+  // ==================== EMERGENCY CONTACTS HANDLERS ====================
+  const handleSaveContact = (contact: EmergencyContact) => {
+    updateAndSaveState((prev) => {
+      const list = prev.emergencyContacts || [];
+      const exists = list.some((c) => c.id === contact.id);
+      const updated = exists ? list.map((c) => (c.id === contact.id ? contact : c)) : [contact, ...list];
+      return { ...prev, emergencyContacts: updated };
+    });
+  };
+
+  const handleDeleteContact = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      emergencyContacts: (prev.emergencyContacts || []).filter((c) => c.id !== id),
+    }));
+  };
+
+  // ==================== MARKETPLACE HANDLERS ====================
+  const handleSaveMarketplaceItem = (item: MarketplaceItem) => {
+    updateAndSaveState((prev) => {
+      const list = prev.marketplace || [];
+      const exists = list.some((m) => m.id === item.id);
+      const updated = exists ? list.map((m) => (m.id === item.id ? item : m)) : [item, ...list];
+      return { ...prev, marketplace: updated };
+    });
+  };
+
+  const handleDeleteMarketplaceItem = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      marketplace: (prev.marketplace || []).filter((m) => m.id !== id),
+    }));
+  };
+
+  const handleClearAllMarketplace = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      marketplace: [],
+    }));
+  };
+
+  const handleResetDemoMarketplace = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      marketplace: sampleDemoMarketplace,
+    }));
+  };
+
+  // ==================== RT CASH HANDLERS ====================
+  const handleSaveRTCashItem = (item: RTCashItem) => {
+    updateAndSaveState((prev) => {
+      const list = prev.rtCash || [];
+      const exists = list.some((c) => c.id === item.id);
+      const updated = exists ? list.map((c) => (c.id === item.id ? item : c)) : [item, ...list];
+      return { ...prev, rtCash: updated };
+    });
+  };
+
+  const handleDeleteRTCashItem = (id: string) => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      rtCash: (prev.rtCash || []).filter((c) => c.id !== id),
+    }));
+  };
+
+  const handleResetRTCashToOfficial = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      rtCash: initialAppData.rtCash || [],
+      monthlyFees: initialAppData.monthlyFees || [],
+    }));
+  };
+
+  // ==================== 17AN HUT RI HANDLERS ====================
   const handleSaveCompetition = (comp: Competition) => {
     updateAndSaveState((prev) => {
       const exists = prev.competitions.some((c) => c.id === comp.id);
@@ -77,12 +262,10 @@ export default function App() {
   };
 
   const handleDeleteCompetition = (id: string) => {
-    if (window.confirm('Yakin ingin menghapus cabang lomba ini? Data peserta terkait mungkin tidak berasosiasi.')) {
-      updateAndSaveState((prev) => ({
-        ...prev,
-        competitions: prev.competitions.filter((c) => c.id !== id),
-      }));
-    }
+    updateAndSaveState((prev) => ({
+      ...prev,
+      competitions: prev.competitions.filter((c) => c.id !== id),
+    }));
   };
 
   const handleUpdateCompStatus = (id: string, status: CompetitionStatus) => {
@@ -92,7 +275,6 @@ export default function App() {
     }));
   };
 
-  // Handlers for Participant
   const handleSaveParticipant = (participant: Participant) => {
     updateAndSaveState((prev) => {
       const exists = prev.participants.some((p) => p.id === participant.id);
@@ -112,7 +294,6 @@ export default function App() {
     }
   };
 
-  // Handlers for Donor
   const handleSaveDonor = (donor: Donor) => {
     updateAndSaveState((prev) => {
       const exists = prev.donors.some((d) => d.id === donor.id);
@@ -132,7 +313,6 @@ export default function App() {
     }
   };
 
-  // Handlers for Expense
   const handleSaveExpense = (expense: Expense) => {
     updateAndSaveState((prev) => {
       const exists = prev.expenses.some((e) => e.id === expense.id);
@@ -152,7 +332,6 @@ export default function App() {
     }
   };
 
-  // Handlers for Tournament Brackets
   const handleSaveBracket = (bracket: TournamentBracket) => {
     updateAndSaveState((prev) => {
       const existingBrackets = prev.brackets || [];
@@ -178,7 +357,6 @@ export default function App() {
     }
   };
 
-  // Reset to default sample data
   const handleResetData = () => {
     if (window.confirm('Kembalikan data ke contoh awal Green Bussan Village? Semua data tambahan saat ini akan direset.')) {
       const defaultData = resetAppState();
@@ -186,7 +364,6 @@ export default function App() {
     }
   };
 
-  // Quick Action Handler
   const handleSelectQuickAction = (action: 'participant' | 'donor' | 'expense' | 'competition') => {
     if (action === 'participant') {
       setPartToEdit(null);
@@ -204,22 +381,14 @@ export default function App() {
     }
   };
 
-  // View participants of a specific competition
-  const handleViewCompParticipants = (comp: Competition) => {
-    setSelectedCompFilterForParticipants(comp.id);
-    setActiveTab('participants');
-  };
-
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased selection:bg-red-500 selection:text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased selection:bg-emerald-600 selection:text-white flex flex-col justify-between">
       <div>
-        {/* Header */}
+        {/* Top Header */}
         <Header
           onOpenQuickAdd={() => setIsQuickAddOpen(true)}
-          onOpenReport={() => setActiveTab('report')}
-          onResetData={handleResetData}
-          totalIncome={totalIncome}
-          totalExpense={totalExpense}
+          onOpenEmergency={() => setActiveTab('emergency')}
+          onOpenPost={() => setIsHeaderPostOpen(true)}
         />
 
         {/* Desktop / Tablet Tab Navigation */}
@@ -227,126 +396,157 @@ export default function App() {
           activeTab={activeTab}
           onChangeTab={setActiveTab}
           counts={{
-            competitions: appState.competitions.length,
-            participants: appState.participants.length,
-            brackets: (appState.brackets || []).length,
-            donors: appState.donors.length,
-            expenses: appState.expenses.length,
+            posts: (appState.posts || []).length,
+            media: (appState.mediaGallery || []).length,
+            events: (appState.events || []).length,
+            contacts: (appState.emergencyContacts || []).length,
+            market: (appState.marketplace || []).length,
+            rtCash: (appState.rtCash || []).length,
           }}
         />
 
-        {/* Main View Area */}
+        {/* Main Content Area */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5">
-          {activeTab === 'dashboard' && (
-            <DashboardView
-              state={appState}
-              onNavigate={setActiveTab}
-              onQuickAdd={handleSelectQuickAction}
+          {activeTab === 'feed' && (
+            <CommunityFeedView
+              posts={appState.posts || []}
+              events={appState.events || []}
+              emergencyContacts={appState.emergencyContacts || []}
+              rtCash={appState.rtCash || []}
+              onSavePost={handleSavePost}
+              onDeletePost={handleDeletePost}
+              onLikePost={handleLikePost}
+              onNavigateTab={(tab) => setActiveTab(tab)}
             />
           )}
 
-          {activeTab === 'competitions' && (
-            <CompetitionsView
-              competitions={appState.competitions}
-              participants={appState.participants}
-              onAddCompetition={() => {
+          {activeTab === 'gallery' && (
+            <MediaGalleryView
+              mediaList={appState.mediaGallery || []}
+              onSaveMedia={handleSaveMedia}
+              onDeleteMedia={handleDeleteMedia}
+              onLikeMedia={handleLikeMedia}
+              onClearAllMedia={handleClearAllMedia}
+              onResetDemoMedia={handleResetDemoMedia}
+            />
+          )}
+
+          {activeTab === 'events' && (
+            <EventsView
+              events={appState.events || []}
+              onSaveEvent={handleSaveEvent}
+              onDeleteEvent={handleDeleteEvent}
+              onClearAllEvents={handleClearAllEvents}
+              onResetDemoEvents={handleResetDemoEvents}
+            />
+          )}
+
+          {activeTab === 'emergency' && (
+            <EmergencyDirectoryView
+              contacts={appState.emergencyContacts || []}
+              onSaveContact={handleSaveContact}
+              onDeleteContact={handleDeleteContact}
+            />
+          )}
+
+          {activeTab === 'market' && (
+            <MarketplaceView
+              items={appState.marketplace || []}
+              onSaveItem={handleSaveMarketplaceItem}
+              onDeleteItem={handleDeleteMarketplaceItem}
+              onClearAllItems={handleClearAllMarketplace}
+              onResetDemoItems={handleResetDemoMarketplace}
+            />
+          )}
+
+          {activeTab === 'rtCash' && (
+            <RTCashView
+              rtCash={appState.rtCash || []}
+              monthlyFees={appState.monthlyFees}
+              onSaveCashItem={handleSaveRTCashItem}
+              onDeleteCashItem={handleDeleteRTCashItem}
+              onResetOfficialRTCash={handleResetRTCashToOfficial}
+            />
+          )}
+
+          {activeTab === 'archive' && (
+            <AugustArchiveView
+              state={appState}
+              onSaveCompetition={handleSaveCompetition}
+              onDeleteCompetition={handleDeleteCompetition}
+              onUpdateCompStatus={handleUpdateCompStatus}
+              onSaveParticipant={handleSaveParticipant}
+              onDeleteParticipant={handleDeleteParticipant}
+              onSaveDonor={handleSaveDonor}
+              onDeleteDonor={handleDeleteDonor}
+              onSaveExpense={handleSaveExpense}
+              onDeleteExpense={handleDeleteExpense}
+              onSaveBracket={handleSaveBracket}
+              onDeleteBracket={handleDeleteBracket}
+              onResetData={handleResetData}
+              onOpenQuickAdd={handleSelectQuickAction}
+              onEditCompetitionModal={(c) => {
+                setCompToEdit(c);
+                setIsCompModalOpen(true);
+              }}
+              onAddCompetitionModal={() => {
                 setCompToEdit(null);
                 setIsCompModalOpen(true);
               }}
-              onEditCompetition={(comp) => {
-                setCompToEdit(comp);
-                setIsCompModalOpen(true);
+              onEditParticipantModal={(p) => {
+                setPartToEdit(p);
+                setIsPartModalOpen(true);
               }}
-              onDeleteCompetition={handleDeleteCompetition}
-              onUpdateStatus={handleUpdateCompStatus}
-              onViewParticipants={handleViewCompParticipants}
-              onViewBracket={() => setActiveTab('brackets')}
-            />
-          )}
-
-          {activeTab === 'brackets' && (
-            <TournamentBracketView
-              competitions={appState.competitions}
-              participants={appState.participants}
-              brackets={appState.brackets || []}
-              onSaveBracket={handleSaveBracket}
-              onDeleteBracket={handleDeleteBracket}
-              onAddParticipant={handleSaveParticipant}
-            />
-          )}
-
-          {activeTab === 'participants' && (
-            <ParticipantsView
-              participants={appState.participants}
-              competitions={appState.competitions}
-              selectedCompFilter={selectedCompFilterForParticipants}
-              onAddParticipant={() => {
+              onAddParticipantModal={() => {
                 setPartToEdit(null);
                 setDefaultCompForPart('');
                 setIsPartModalOpen(true);
               }}
-              onEditParticipant={(part) => {
-                setPartToEdit(part);
-                setIsPartModalOpen(true);
+              onEditDonorModal={(d) => {
+                setDonorToEdit(d);
+                setIsDonorModalOpen(true);
               }}
-              onDeleteParticipant={handleDeleteParticipant}
-            />
-          )}
-
-          {activeTab === 'donors' && (
-            <DonorsView
-              donors={appState.donors}
-              onAddDonor={() => {
+              onAddDonorModal={() => {
                 setDonorToEdit(null);
                 setIsDonorModalOpen(true);
               }}
-              onEditDonor={(donor) => {
-                setDonorToEdit(donor);
-                setIsDonorModalOpen(true);
+              onEditExpenseModal={(e) => {
+                setExpenseToEdit(e);
+                setIsExpenseModalOpen(true);
               }}
-              onDeleteDonor={handleDeleteDonor}
-            />
-          )}
-
-          {activeTab === 'expenses' && (
-            <ExpensesView
-              expenses={appState.expenses}
-              onAddExpense={() => {
+              onAddExpenseModal={() => {
                 setExpenseToEdit(null);
                 setIsExpenseModalOpen(true);
               }}
-              onEditExpense={(expense) => {
-                setExpenseToEdit(expense);
-                setIsExpenseModalOpen(true);
-              }}
-              onDeleteExpense={handleDeleteExpense}
-            />
-          )}
-
-          {activeTab === 'report' && (
-            <FinancialReportView
-              state={appState}
-              onImportState={(newState) => setAppState(newState)}
-              onResetData={handleResetData}
             />
           )}
         </main>
       </div>
 
-      {/* Footer Branding */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 text-center space-y-1 mb-12 md:mb-0 print:hidden">
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 text-center space-y-1.5 mb-14 md:mb-0 print:hidden">
         <p className="font-semibold text-slate-300">
-          Aplikasi Manajemen Panitia HUT RI ke-81 Komplek Green Bussan Village
+          Portal Informasi & Komunikasi Warga Green Bussan Village
         </p>
         <p className="text-[11px] text-slate-500">
-          Dibuat khusus untuk transparansi lomba, data peserta, donasi warga, dan laporan kas real-time.
+          RT 22 · Kelurahan Sukamaju, Sako · Palembang, Sumatera Selatan
+        </p>
+        <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5 pt-1">
+          Made with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline-block animate-pulse" /> by <span className="text-slate-200 font-semibold">Khudri (Blok D3)</span>
         </p>
       </footer>
 
       {/* Mobile Bottom Navigation Bar */}
       <MobileNav activeTab={activeTab} onChangeTab={setActiveTab} />
 
-      {/* Modals */}
+      {/* Header Quick Post Modal */}
+      <PostModal
+        isOpen={isHeaderPostOpen}
+        onClose={() => setIsHeaderPostOpen(false)}
+        onSave={handleSavePost}
+      />
+
+      {/* 17an Quick Action Modal */}
       <QuickAddModal
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}

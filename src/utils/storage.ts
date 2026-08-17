@@ -1,7 +1,7 @@
 import { AppState } from '../types';
 import { initialAppData } from '../data/initialData';
 
-const STORAGE_KEY = 'green_bussan_17an_app_state_v5';
+const STORAGE_KEY = 'green_bussan_17an_app_state_v9';
 
 export function loadAppState(): AppState {
   try {
@@ -12,8 +12,18 @@ export function loadAppState(): AppState {
       return initialAppData;
     }
     return {
-      ...parsed,
-      brackets: parsed.brackets && parsed.brackets.length > 0 ? parsed.brackets : (initialAppData.brackets || []),
+      posts: Array.isArray(parsed.posts) ? parsed.posts : (initialAppData.posts || []),
+      events: Array.isArray(parsed.events) ? parsed.events : (initialAppData.events || []),
+      mediaGallery: Array.isArray(parsed.mediaGallery) ? parsed.mediaGallery : (initialAppData.mediaGallery || []),
+      emergencyContacts: Array.isArray(parsed.emergencyContacts) ? parsed.emergencyContacts : (initialAppData.emergencyContacts || []),
+      marketplace: Array.isArray(parsed.marketplace) ? parsed.marketplace : (initialAppData.marketplace || []),
+      rtCash: Array.isArray(parsed.rtCash) ? parsed.rtCash : (initialAppData.rtCash || []),
+      monthlyFees: Array.isArray(parsed.monthlyFees) ? parsed.monthlyFees : (initialAppData.monthlyFees || []),
+      competitions: Array.isArray(parsed.competitions) ? parsed.competitions : initialAppData.competitions,
+      participants: Array.isArray(parsed.participants) ? parsed.participants : initialAppData.participants,
+      donors: Array.isArray(parsed.donors) ? parsed.donors : initialAppData.donors,
+      expenses: Array.isArray(parsed.expenses) ? parsed.expenses : initialAppData.expenses,
+      brackets: Array.isArray(parsed.brackets) ? parsed.brackets : (initialAppData.brackets || []),
     };
   } catch (e) {
     console.error('Failed to parse localStorage, resetting to initial', e);

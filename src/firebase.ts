@@ -24,12 +24,55 @@ export function subscribeToAppState(
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.competitions && data.donors && data.expenses) {
-          // If existing Firestore document doesn't have brackets or has empty brackets, fallback to initial seeded brackets
+          // If existing Firestore document doesn't have brackets or community modules, fallback to initial seeded data
           const brackets = (Array.isArray(data.brackets) && data.brackets.length > 0)
             ? data.brackets
             : (initialAppData.brackets || []);
 
+          const posts = Array.isArray(data.posts)
+            ? data.posts
+            : (initialAppData.posts || []);
+
+          // Check if clean migration is needed for mediaGallery, marketplace & events to start clean & empty
+          const needsCleanStartMigration = !data.cleanPortalDataVersion || data.cleanPortalDataVersion < 2;
+
+          const events = needsCleanStartMigration
+            ? []
+            : (Array.isArray(data.events) ? data.events : (initialAppData.events || []));
+
+          const mediaGallery = needsCleanStartMigration
+            ? []
+            : (Array.isArray(data.mediaGallery) ? data.mediaGallery : (initialAppData.mediaGallery || []));
+
+          const emergencyContacts = Array.isArray(data.emergencyContacts)
+            ? data.emergencyContacts
+            : (initialAppData.emergencyContacts || []);
+
+          const marketplace = needsCleanStartMigration
+            ? []
+            : (Array.isArray(data.marketplace) ? data.marketplace : (initialAppData.marketplace || []));
+
+          // Check if rtCash needs migration/syncing to the official RT 22 transaction records
+          const needsRTCashSync =
+            !data.rtCashVersion ||
+            data.rtCashVersion < 4 ||
+            !Array.isArray(data.rtCash) ||
+            data.rtCash.length === 0 ||
+            data.rtCash.some((item: any) => item.amount === 5400000);
+
+          const rtCash = needsRTCashSync ? (initialAppData.rtCash || []) : data.rtCash;
+          const monthlyFees = Array.isArray(data.monthlyFees)
+            ? data.monthlyFees
+            : (initialAppData.monthlyFees || []);
+
           const loadedState: AppState = {
+            posts,
+            events,
+            mediaGallery,
+            emergencyContacts,
+            marketplace,
+            rtCash,
+            monthlyFees,
             competitions: data.competitions || [],
             participants: data.participants || [],
             donors: data.donors || [],
@@ -37,10 +80,19 @@ export function subscribeToAppState(
             brackets: brackets,
           };
 
-          // If Firestore was missing brackets, update Firestore with the merged state
-          if (!data.brackets || (Array.isArray(data.brackets) && data.brackets.length === 0 && brackets.length > 0)) {
-            saveAppStateToFirestore(loadedState).catch((err) => {
-              console.warn('Initial bracket migration to Firestore:', err);
+          // If Firestore was missing any of the community modules or needed sync, write back the updated state
+          if (
+            needsRTCashSync ||
+            needsCleanStartMigration ||
+            !Array.isArray(data.posts) ||
+            !Array.isArray(data.emergencyContacts)
+          ) {
+            saveAppStateToFirestore({
+              ...loadedState,
+              rtCashVersion: 4,
+              cleanPortalDataVersion: 2,
+            } as any).catch((err) => {
+              console.warn('Syncing updated state to Firestore:', err);
             });
           }
 

@@ -2,12 +2,36 @@
   "entities": {
     "app_state": {
       "title": "AppState",
-      "description": "Global application state for Green Bussan Village 17an event",
+      "description": "Global state for Portal Warga Green Bussan Village including news feed, media gallery, calendar, emergency contacts, marketplace, RT cash, and 17an event archive",
       "type": "object",
       "properties": {
+        "posts": {
+          "type": "array",
+          "description": "List of community announcements and posts"
+        },
+        "events": {
+          "type": "array",
+          "description": "List of community events and calendar items"
+        },
+        "mediaGallery": {
+          "type": "array",
+          "description": "List of community photos and videos"
+        },
+        "emergencyContacts": {
+          "type": "array",
+          "description": "List of emergency and utility contacts"
+        },
+        "marketplace": {
+          "type": "array",
+          "description": "List of local resident marketplace and UMKM listings"
+        },
+        "rtCash": {
+          "type": "array",
+          "description": "List of RT cash entries and financial transparency items"
+        },
         "competitions": {
           "type": "array",
-          "description": "List of competitions"
+          "description": "List of competitions from 17an archive"
         },
         "participants": {
           "type": "array",
