@@ -11,12 +11,14 @@ interface PostModalProps {
 }
 
 const CATEGORIES: PostCategory[] = [
+  'Berita Warga',
+  'Liputan 17an & Kegiatan',
   'Pengumuman RT',
   'Kerja Bakti',
   'Iuran & Kas',
   'Keamanan & Ronda',
-  'Sosial & Warga',
   'Kesehatan & Posyandu',
+  'Sosial & Warga',
   'Umum',
 ];
 
@@ -28,9 +30,9 @@ export const PostModal: React.FC<PostModalProps> = ({
 }) => {
   const [title, setTitle] = useState(postToEdit?.title || '');
   const [content, setContent] = useState(postToEdit?.content || '');
-  const [category, setCategory] = useState<PostCategory>(postToEdit?.category || 'Pengumuman RT');
-  const [authorName, setAuthorName] = useState(postToEdit?.authorName || 'Pak Akhmad Khudri');
-  const [authorRole, setAuthorRole] = useState(postToEdit?.authorRole || 'Ketua RT 01 Green Bussan');
+  const [category, setCategory] = useState<PostCategory>(postToEdit?.category || 'Berita Warga');
+  const [authorName, setAuthorName] = useState(postToEdit?.authorName || '');
+  const [authorRole, setAuthorRole] = useState(postToEdit?.authorRole || 'Warga Green Bussan');
   const [isPinned, setIsPinned] = useState(postToEdit?.isPinned || false);
   const [tagsInput, setTagsInput] = useState(postToEdit?.tags?.join(', ') || '');
   const [imagePreview, setImagePreview] = useState<string | null>(postToEdit?.images?.[0] || null);
@@ -66,7 +68,7 @@ export const PostModal: React.FC<PostModalProps> = ({
     e.preventDefault();
 
     if (!title.trim() || !content.trim()) {
-      alert('Mohon isi judul dan isi pengumuman.');
+      alert('Mohon isi judul dan isi berita / pengumuman.');
       return;
     }
 
@@ -80,7 +82,7 @@ export const PostModal: React.FC<PostModalProps> = ({
       title: title.trim(),
       content: content.trim(),
       category,
-      authorName: authorName.trim() || 'Pengurus RT 01',
+      authorName: authorName.trim() || 'Warga Komplek',
       authorRole: authorRole.trim() || 'Green Bussan Village',
       date: postToEdit?.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
       createdAt: postToEdit?.createdAt || new Date().toISOString(),
@@ -99,25 +101,25 @@ export const PostModal: React.FC<PostModalProps> = ({
       id="post-modal"
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
     >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-200 relative my-8 animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-7 border border-slate-200 relative my-8 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-sm">
               <Send className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">
-                {postToEdit ? 'Edit Kabar / Pengumuman' : 'Buat Informasi & Pengumuman Baru'}
+                {postToEdit ? 'Edit Berita / Pengumuman' : 'Tulis Berita / Pengumuman Warga'}
               </h2>
               <p className="text-xs text-slate-500">
-                Informasi resmi yang akan tampil di papan pengumuman warga komplek
+                Bagikan liputan kegiatan 17an, kabar gembira warga, atau pengumuman lingkungan
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+            className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -128,12 +130,12 @@ export const PostModal: React.FC<PostModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Kategori Informasi
+                Kategori Berita / Kabar
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as PostCategory)}
-                className="w-full text-xs px-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium"
+                className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium shadow-sm"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -144,7 +146,7 @@ export const PostModal: React.FC<PostModalProps> = ({
             </div>
 
             <div className="pt-2 sm:pt-4">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
+              <label className="flex items-center gap-2 cursor-pointer select-none bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 hover:bg-emerald-50/50 transition-colors">
                 <input
                   type="checkbox"
                   checked={isPinned}
@@ -162,41 +164,41 @@ export const PostModal: React.FC<PostModalProps> = ({
           {/* Title */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              Judul Informasi / Pengumuman <span className="text-red-500">*</span>
+              Judul Berita / Kabar Warga <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               required
-              placeholder="Contoh: Jadwal Fogging Nyamuk DBD & Kerja Bakti Saluran Air"
+              placeholder="Contoh: Liputan Keseruan Final Turnamen Gaple & Pesta Rakyat 17an"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold shadow-sm"
             />
           </div>
 
           {/* Content */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              Isi Lengkap Informasi <span className="text-red-500">*</span>
+              Isi Cerita / Narasi Berita <span className="text-red-500">*</span>
             </label>
             <textarea
               required
               rows={4}
-              placeholder="Tuliskan detail pengumuman, tanggal pelaksanaan, tata cara, atau imbauan bagi warga komplek..."
+              placeholder="Tuliskan cerita liputan kegiatan, pengalaman seru lomba 17an, kabar gembira warga, atau detail pengumuman RT..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none leading-relaxed"
+              className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none leading-relaxed shadow-sm"
             />
           </div>
 
           {/* Image Attachment with Auto Compression */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              Lampirkan Foto Pengumuman (Opsional)
+              Lampirkan Foto Dokumentasi / Kegiatan (Opsional)
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/30 rounded-xl p-3.5 text-center cursor-pointer transition-all flex items-center justify-between"
+              className="border border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/30 rounded-2xl p-3.5 text-center cursor-pointer transition-all flex items-center justify-between"
             >
               <input
                 ref={fileInputRef}
@@ -206,15 +208,15 @@ export const PostModal: React.FC<PostModalProps> = ({
                 className="hidden"
               />
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                  <ImageIcon className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ImageIcon className="w-5 h-5" />
                 </div>
                 <div className="text-left">
                   <p className="text-xs font-semibold text-slate-800">
-                    {imagePreview ? 'Foto terpilih (Klik untuk ganti)' : 'Pilih Foto dari Galeri / Kamera'}
+                    {imagePreview ? 'Foto terpilih (Klik untuk ganti)' : 'Pilih Foto dari Galeri / Kamera HP'}
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Otomatis dikompres agar hemat kuota & cepat tampil
+                    Otomatis dikompres agar cepat tampil & hemat kuota warga
                   </p>
                 </div>
               </div>
@@ -227,7 +229,7 @@ export const PostModal: React.FC<PostModalProps> = ({
                     setImagePreview(null);
                     setCompressionInfo(null);
                   }}
-                  className="text-xs text-red-500 hover:underline px-2"
+                  className="text-xs text-rose-500 hover:underline px-2 font-semibold"
                 >
                   Hapus Foto
                 </button>
@@ -235,18 +237,18 @@ export const PostModal: React.FC<PostModalProps> = ({
             </div>
 
             {imagePreview && (
-              <div className="mt-2 relative">
+              <div className="mt-2.5 relative">
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="max-h-36 rounded-lg object-contain border border-slate-200"
+                  className="max-h-40 rounded-xl object-contain border border-slate-200 shadow-sm"
                 />
               </div>
             )}
 
             {compressionInfo && (
-              <p className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded mt-1.5 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
+              <p className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg mt-1.5 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5" />
                 {compressionInfo}
               </p>
             )}
@@ -256,12 +258,12 @@ export const PostModal: React.FC<PostModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Nama Pembuat / Pengurus
+                Nama Penulis / Warga <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="Contoh: Pak Akhmad Khudri"
+                placeholder="Contoh: Pak Hendra / Ibu Maya / Panitia"
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
                 className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -269,11 +271,11 @@ export const PostModal: React.FC<PostModalProps> = ({
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Jabatan / Peran
+                Peran / Blok Rumah
               </label>
               <input
                 type="text"
-                placeholder="Contoh: Ketua RT 01 / Seksi Keamanan"
+                placeholder="Contoh: Warga Blok A1 / Seksi Lomba 17an"
                 value={authorRole}
                 onChange={(e) => setAuthorRole(e.target.value)}
                 className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -288,7 +290,7 @@ export const PostModal: React.FC<PostModalProps> = ({
             </label>
             <input
               type="text"
-              placeholder="Contoh: Pengumuman, Iuran, KerjaBakti"
+              placeholder="Contoh: 17Agustus, TurnamenGaple, LombaAnak, KerjaBakti"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -307,10 +309,10 @@ export const PostModal: React.FC<PostModalProps> = ({
             <button
               type="submit"
               disabled={isCompressing}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Send className="w-4 h-4" />
-              {postToEdit ? 'Simpan Perubahan' : 'Terbitkan Pengumuman'}
+              {postToEdit ? 'Simpan Perubahan' : 'Terbitkan Berita'}
             </button>
           </div>
         </form>

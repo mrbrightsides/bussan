@@ -16,7 +16,7 @@ import {
   TournamentBracket,
 } from './types';
 import { loadAppState, saveAppState, resetAppState } from './utils/storage';
-import { sampleDemoMedia, sampleDemoMarketplace, sampleDemoEvents, initialAppData } from './data/initialData';
+import { sampleDemoPosts, sampleDemoMedia, sampleDemoMarketplace, sampleDemoEvents, initialAppData } from './data/initialData';
 import { subscribeToAppState, saveAppStateToFirestore } from './firebase';
 import { Header } from './components/Header';
 import { TabNav, TabType } from './components/TabNav';
@@ -103,6 +103,20 @@ export default function App() {
     updateAndSaveState((prev) => ({
       ...prev,
       posts: (prev.posts || []).map((p) => (p.id === id ? { ...p, likes: (p.likes || 0) + 1 } : p)),
+    }));
+  };
+
+  const handleClearAllPosts = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      posts: [],
+    }));
+  };
+
+  const handleResetDemoPosts = () => {
+    updateAndSaveState((prev) => ({
+      ...prev,
+      posts: sampleDemoPosts,
     }));
   };
 
@@ -416,6 +430,8 @@ export default function App() {
               onSavePost={handleSavePost}
               onDeletePost={handleDeletePost}
               onLikePost={handleLikePost}
+              onClearAllPosts={handleClearAllPosts}
+              onResetDemoPosts={handleResetDemoPosts}
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
           )}

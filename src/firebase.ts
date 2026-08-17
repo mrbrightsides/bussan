@@ -29,12 +29,12 @@ export function subscribeToAppState(
             ? data.brackets
             : (initialAppData.brackets || []);
 
-          const posts = Array.isArray(data.posts)
-            ? data.posts
-            : (initialAppData.posts || []);
+          // Check if clean migration is needed for mediaGallery, marketplace, events & posts to start clean & empty
+          const needsCleanStartMigration = !data.cleanPortalDataVersion || data.cleanPortalDataVersion < 3;
 
-          // Check if clean migration is needed for mediaGallery, marketplace & events to start clean & empty
-          const needsCleanStartMigration = !data.cleanPortalDataVersion || data.cleanPortalDataVersion < 2;
+          const posts = needsCleanStartMigration
+            ? []
+            : (Array.isArray(data.posts) ? data.posts : (initialAppData.posts || []));
 
           const events = needsCleanStartMigration
             ? []
@@ -90,7 +90,7 @@ export function subscribeToAppState(
             saveAppStateToFirestore({
               ...loadedState,
               rtCashVersion: 4,
-              cleanPortalDataVersion: 2,
+              cleanPortalDataVersion: 3,
             } as any).catch((err) => {
               console.warn('Syncing updated state to Firestore:', err);
             });

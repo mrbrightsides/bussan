@@ -101,6 +101,8 @@ export interface TournamentBracket {
 // === KOMUNITAS & PORTAL WARGA GREEN BUSSAN VILLAGE ===
 
 export type PostCategory =
+  | 'Berita Warga'
+  | 'Liputan 17an & Kegiatan'
   | 'Pengumuman RT'
   | 'Kerja Bakti'
   | 'Iuran & Kas'

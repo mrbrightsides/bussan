@@ -418,9 +418,26 @@ const initialParticipants: Participant[] = [
   { id: 'part-16', name: 'Pak Akhmad Khudri', houseNo: 'Blok A5', rt: 'RT 01', ageGroup: 'Bapak-bapak', competitionId: 'comp-36', registeredAt: '12 Agustus 2026' },
 ];
 
-const initialPosts: CommunityPost[] = [
+export const sampleDemoPosts: CommunityPost[] = [
   {
     id: 'post-1',
+    title: '🏆 Liputan Kemeriahan Final Turnamen Gaple & Pesta Rakyat 17 Agustus',
+    category: 'Liputan 17an & Kegiatan',
+    content:
+      'Alhamdulillah, babak final Turnamen Gaple Kemerdekaan tadi malam berlangsung seru dan penuh tawa sampai dini hari! Selamat kepada pasangan Juara 1 dan seluruh peserta yang sudah memeriahkan suasana. Seluruh hadiah telah diserahkan langsung oleh Ketua RT. Terima kasih kepada seksi perlengkapan dan ibu-ibu yang telah menyediakan hidangan kopi dan cemilan hangat untuk seluruh warga.',
+    authorName: 'Pak Hendra & Seksi Lomba',
+    authorRole: 'Panitia 17an (Blok A1)',
+    date: '17 Agustus 2026',
+    createdAt: '2026-08-17T11:00:00.000Z',
+    isPinned: true,
+    likes: 32,
+    tags: ['Liputan 17an', 'TurnamenGaple', 'PestaRakyat'],
+    images: [
+      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1000&q=80',
+    ],
+  },
+  {
+    id: 'post-2',
     title: '📢 Hasil Evaluasi & Ucapan Terima Kasih Semarak Kemerdekaan HUT RI Ke-81',
     category: 'Pengumuman RT',
     content:
@@ -430,14 +447,14 @@ const initialPosts: CommunityPost[] = [
     date: '17 Agustus 2026',
     createdAt: '2026-08-17T10:00:00.000Z',
     isPinned: true,
-    likes: 24,
+    likes: 28,
     tags: ['HUT RI 81', 'Kemerdekaan', 'Laporan'],
     images: [
       'https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?auto=format&fit=crop&w=1000&q=80',
     ],
   },
   {
-    id: 'post-2',
+    id: 'post-3',
     title: '🌿 Jadwal Kerja Bakti Massal Pembersihan Saluran Air & Fogging Nyamuk DBD',
     category: 'Kerja Bakti',
     content:
@@ -446,7 +463,7 @@ const initialPosts: CommunityPost[] = [
     authorRole: 'Pengurus RT 01',
     date: '18 Agustus 2026',
     createdAt: '2026-08-18T08:30:00.000Z',
-    isPinned: true,
+    isPinned: false,
     likes: 18,
     tags: ['Kerja Bakti', 'Fogging', 'Lingkungan Bersih'],
     images: [
@@ -454,7 +471,7 @@ const initialPosts: CommunityPost[] = [
     ],
   },
   {
-    id: 'post-3',
+    id: 'post-4',
     title: '🛡️ Pengetatan Akses Portal Masuk Jam 23:00 WIB & Prosedur Tamu Menginap',
     category: 'Keamanan & Ronda',
     content:
@@ -468,7 +485,7 @@ const initialPosts: CommunityPost[] = [
     tags: ['Keamanan', 'Portal', 'Satpam 24 Jam'],
   },
   {
-    id: 'post-4',
+    id: 'post-5',
     title: '👶 Jadwal Posyandu Balita Melati & Pemeriksaan Kesehatan Lansia Bulan Ini',
     category: 'Kesehatan & Posyandu',
     content:
@@ -485,6 +502,8 @@ const initialPosts: CommunityPost[] = [
     ],
   },
 ];
+
+const initialPosts: CommunityPost[] = [];
 
 export const sampleDemoEvents: CommunityEvent[] = [
   {
