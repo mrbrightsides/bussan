@@ -49,12 +49,12 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
     const originalSizeKb = Math.round(file.size / 1024);
 
     try {
-      const compressedDataUrl = await compressImageFile(file, 1280, 1280, 0.82);
+      const compressedDataUrl = await compressImageFile(file, 960, 960, 0.72);
       setImagePreview(compressedDataUrl);
 
       // Estimate compressed size from base64 string
       const compressedSizeKb = Math.round((compressedDataUrl.length * 3) / 4 / 1024);
-      setCompressionInfo(`Ukuran asli: ${originalSizeKb} KB ➔ Terkompresi: ${compressedSizeKb} KB (Siap simpan cepat)`);
+      setCompressionInfo(`Foto siap: ${originalSizeKb} KB ➔ ${compressedSizeKb} KB (Hemat kuota & sinkron kilat)`);
     } catch (err) {
       console.error(err);
       alert('Gagal mengompres gambar. Silakan coba gambar lain.');

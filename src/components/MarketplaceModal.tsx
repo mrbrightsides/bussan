@@ -77,10 +77,10 @@ export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
     const originalKb = Math.round(file.size / 1024);
 
     try {
-      const compressedDataUrl = await compressImageFile(file, 800, 800, 0.82);
+      const compressedDataUrl = await compressImageFile(file, 800, 800, 0.72);
       setImagePreview(compressedDataUrl);
       const compressedKb = Math.round((compressedDataUrl.length * 3) / 4 / 1024);
-      setCompressionInfo(`Foto dioptimalkan: ${originalKb} KB ➔ ${compressedKb} KB`);
+      setCompressionInfo(`Foto dioptimalkan: ${originalKb} KB ➔ ${compressedKb} KB (Hemat kuota)`);
     } catch (err) {
       console.error(err);
       alert('Gagal mengompres gambar produk.');

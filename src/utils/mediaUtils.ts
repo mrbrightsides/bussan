@@ -4,10 +4,23 @@
 
 export async function compressImageFile(
   file: File,
-  maxWidth = 1200,
-  maxHeight = 1200,
-  quality = 0.82
+  maxWidth = 960,
+  maxHeightOrQuality?: number,
+  explicitQuality = 0.72
 ): Promise<string> {
+  let maxHeight = maxWidth;
+  let quality = explicitQuality;
+
+  if (typeof maxHeightOrQuality === 'number') {
+    if (maxHeightOrQuality <= 1.0) {
+      // User passed quality as 3rd parameter e.g. compressImage(file, 800, 0.8)
+      quality = maxHeightOrQuality;
+      maxHeight = maxWidth;
+    } else {
+      maxHeight = maxHeightOrQuality;
+    }
+  }
+
   return new Promise((resolve, reject) => {
     // If SVG or gif, convert directly to dataURL to preserve vector/animation
     if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
@@ -27,44 +40,63 @@ export async function compressImageFile(
     reader.onerror = (err) => reject(err);
 
     img.onload = () => {
-      let width = img.width;
-      let height = img.height;
-
-      // Maintain aspect ratio while scaling within max bounding box
-      if (width > height) {
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-      } else {
-        if (height > maxHeight) {
-          width = Math.round((width * maxHeight) / height);
-          height = maxHeight;
-        }
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        // Fallback to uncompressed dataURL if 2D context is unavailable
-        resolve(img.src);
-        return;
-      }
-
-      // Smooth resizing
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Output as WebP or standard JPEG
       try {
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(compressedDataUrl);
-      } catch {
-        resolve(canvas.toDataURL());
+        let width = img.width || 800;
+        let height = img.height || 600;
+
+        // Maintain aspect ratio while scaling within max bounding box
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.max(1, Math.round((height * maxWidth) / width));
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.max(1, Math.round((width * maxHeight) / height));
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, width);
+        canvas.height = Math.max(1, height);
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(img.src);
+          return;
+        }
+
+        // High quality smooth resizing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // Pass 1: standard compression
+        let outputDataUrl = canvas.toDataURL('image/jpeg', Math.min(0.9, Math.max(0.4, quality)));
+
+        // Pass 2: If size is still > 90 KB, perform secondary downsizing to ensure fast cloud sync
+        const estimatedKb = (outputDataUrl.length * 3) / 4 / 1024;
+        if (estimatedKb > 90 && width > 400) {
+          const secondCanvas = document.createElement('canvas');
+          const secondWidth = Math.max(1, Math.round(width * 0.75));
+          const secondHeight = Math.max(1, Math.round(height * 0.75));
+          secondCanvas.width = secondWidth;
+          secondCanvas.height = secondHeight;
+
+          const secondCtx = secondCanvas.getContext('2d');
+          if (secondCtx) {
+            secondCtx.imageSmoothingEnabled = true;
+            secondCtx.imageSmoothingQuality = 'high';
+            secondCtx.drawImage(canvas, 0, 0, secondWidth, secondHeight);
+            outputDataUrl = secondCanvas.toDataURL('image/jpeg', 0.62);
+          }
+        }
+
+        resolve(outputDataUrl);
+      } catch (err) {
+        console.warn('Compression error, falling back to original data URL:', err);
+        resolve(img.src);
       }
     };
 

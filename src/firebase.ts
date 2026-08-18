@@ -1,11 +1,17 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { initializeFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { AppState } from './types';
 import { initialAppData } from './data/initialData';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
+export const db = initializeFirestore(
+  app,
+  {
+    experimentalAutoDetectLongPolling: true,
+  },
+  firebaseConfig.firestoreDatabaseId || '(default)'
+);
 
 const STATE_DOC_REF = doc(db, 'app_state', 'main');
 
