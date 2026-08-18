@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Trash2, AlertTriangle, X, Lock, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, Trash2, AlertTriangle, X, Lock, Eye, EyeOff } from 'lucide-react';
 
-export const ADMIN_RT_PIN = '2222'; // Default PIN Pengurus RT 22
+export const ADMIN_RT_PIN = '2222'; // Default PIN Pengurus RT 22 (Rahasia Pengurus)
 
 interface AdminConfirmationModalProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface AdminConfirmationModalProps {
   message: string;
   itemName?: string;
   confirmButtonText?: string;
-  isBulkAction?: boolean; // If true, requires PIN or typing confirmation
+  isBulkAction?: boolean; // If true, requires PIN
   requirePin?: boolean;
 }
 
@@ -28,12 +28,14 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
 }) => {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const needsPin = isBulkAction || requirePin;
 
   useEffect(() => {
     if (isOpen) {
       setPinInput('');
       setPinError(false);
+      setShowPassword(false);
     }
   }, [isOpen]);
 
@@ -41,7 +43,8 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
 
   const handleConfirm = () => {
     if (needsPin) {
-      if (pinInput.trim() !== ADMIN_RT_PIN && pinInput.trim().toUpperCase() !== 'HAPUS') {
+      const trimmed = pinInput.trim();
+      if (trimmed !== ADMIN_RT_PIN && trimmed.toUpperCase() !== 'HAPUS') {
         setPinError(true);
         return;
       }
@@ -64,7 +67,7 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
             </div>
             <div>
               <div className="text-xs font-bold text-rose-600 uppercase tracking-wider">
-                Konfirmasi Keamanan Pengurus
+                Otorisasi Pengurus RT
               </div>
               <h3 className="text-lg font-bold text-slate-800">{title}</h3>
             </div>
@@ -96,7 +99,7 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
           <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <span>
-              Tindakan ini permanen dan akan menghapus data langsung dari server database RT.
+              Tindakan ini memerlukan verifikasi PIN pengurus dan menghapus data langsung dari server database.
             </span>
           </div>
 
@@ -104,31 +107,45 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
           {needsPin && (
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <label className="block text-xs font-bold text-slate-700">
-                Masukkan PIN Pengurus RT (Default: <span className="font-mono text-emerald-700">{ADMIN_RT_PIN}</span>) atau ketik <span className="font-mono text-rose-600">HAPUS</span>:
+                Masukkan PIN Otorisasi Pengurus RT:
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
-                  type="text"
-                  placeholder={`Ketik ${ADMIN_RT_PIN} atau HAPUS`}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Masukkan PIN pengurus..."
                   value={pinInput}
                   onChange={(e) => {
                     setPinInput(e.target.value);
                     setPinError(false);
                   }}
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleConfirm();
+                    }
+                  }}
+                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl border text-sm font-medium tracking-wider transition-all ${
                     pinError
                       ? 'border-rose-500 bg-rose-50/50 ring-2 ring-rose-200 focus:outline-none'
                       : 'border-slate-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 focus:outline-none'
                   }`}
                   autoFocus
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
               {pinError && (
                 <p className="text-xs text-rose-600 font-medium">
-                  PIN atau teks konfirmasi tidak sesuai. Masukkan {ADMIN_RT_PIN} untuk menyetujui.
+                  PIN otorisasi salah. Hanya pengurus RT yang berwenang melakukan tindakan ini.
                 </p>
               )}
             </div>
