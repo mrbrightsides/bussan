@@ -30,41 +30,20 @@ export function subscribeToAppState(
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.competitions && data.donors && data.expenses) {
-          // If existing Firestore document doesn't have brackets or community modules, fallback to initial seeded data
           const brackets = (Array.isArray(data.brackets) && data.brackets.length > 0)
             ? data.brackets
             : (initialAppData.brackets || []);
 
-          // Check if clean migration is needed for mediaGallery, marketplace, events, posts & inventory to start clean & empty
-          const needsCleanStartMigration = !data.cleanPortalDataVersion || data.cleanPortalDataVersion < 4;
-
-          const posts = needsCleanStartMigration
-            ? []
-            : (Array.isArray(data.posts) ? data.posts : (initialAppData.posts || []));
-
-          const events = needsCleanStartMigration
-            ? []
-            : (Array.isArray(data.events) ? data.events : (initialAppData.events || []));
-
-          const mediaGallery = needsCleanStartMigration
-            ? []
-            : (Array.isArray(data.mediaGallery) ? data.mediaGallery : (initialAppData.mediaGallery || []));
-
+          // Always trust and load user arrays if present in Firestore
+          const posts = Array.isArray(data.posts) ? data.posts : [];
+          const events = Array.isArray(data.events) ? data.events : [];
+          const mediaGallery = Array.isArray(data.mediaGallery) ? data.mediaGallery : [];
           const emergencyContacts = Array.isArray(data.emergencyContacts)
             ? data.emergencyContacts
             : (initialAppData.emergencyContacts || []);
-
-          const facilityReports = needsCleanStartMigration && (!Array.isArray(data.facilityReports) || data.facilityReports.some((r: any) => r.id === 'rep-1'))
-            ? []
-            : (Array.isArray(data.facilityReports) ? data.facilityReports : (initialAppData.facilityReports || []));
-
-          const inventoryItems = needsCleanStartMigration
-            ? []
-            : (Array.isArray(data.inventoryItems) ? data.inventoryItems : (initialAppData.inventoryItems || []));
-
-          const marketplace = needsCleanStartMigration
-            ? []
-            : (Array.isArray(data.marketplace) ? data.marketplace : (initialAppData.marketplace || []));
+          const facilityReports = Array.isArray(data.facilityReports) ? data.facilityReports : [];
+          const inventoryItems = Array.isArray(data.inventoryItems) ? data.inventoryItems : [];
+          const marketplace = Array.isArray(data.marketplace) ? data.marketplace : [];
 
           // Check if rtCash needs migration/syncing to the official RT 22 transaction records
           const needsRTCashSync =
@@ -96,21 +75,16 @@ export function subscribeToAppState(
             brackets: brackets,
           };
 
-          // If Firestore was missing any of the community modules or needed sync, write back the updated state
+          // One-time schema writeback if fields are missing
           if (
             needsRTCashSync ||
-            needsCleanStartMigration ||
+            !data.cleanPortalDataVersion ||
+            !Array.isArray(data.mediaGallery) ||
             !Array.isArray(data.posts) ||
-            !Array.isArray(data.emergencyContacts) ||
-            !Array.isArray(data.facilityReports) ||
-            !Array.isArray(data.inventoryItems)
+            !Array.isArray(data.emergencyContacts)
           ) {
-            saveAppStateToFirestore({
-              ...loadedState,
-              rtCashVersion: 4,
-              cleanPortalDataVersion: 4,
-            } as any).catch((err) => {
-              console.warn('Syncing updated state to Firestore:', err);
+            saveAppStateToFirestore(loadedState).catch((err) => {
+              console.warn('Syncing initial schema state to Firestore:', err);
             });
           }
 
@@ -136,6 +110,8 @@ export async function saveAppStateToFirestore(state: AppState) {
     const cleanState = cleanForFirestore(state);
     await setDoc(STATE_DOC_REF, {
       ...cleanState,
+      rtCashVersion: 4,
+      cleanPortalDataVersion: 4,
       updatedAt: new Date().toISOString(),
     });
     console.log('✅ State successfully synced to Firestore!');

@@ -16,6 +16,8 @@ export function loadAppState(): AppState {
       events: Array.isArray(parsed.events) ? parsed.events : (initialAppData.events || []),
       mediaGallery: Array.isArray(parsed.mediaGallery) ? parsed.mediaGallery : (initialAppData.mediaGallery || []),
       emergencyContacts: Array.isArray(parsed.emergencyContacts) ? parsed.emergencyContacts : (initialAppData.emergencyContacts || []),
+      facilityReports: Array.isArray(parsed.facilityReports) ? parsed.facilityReports : (initialAppData.facilityReports || []),
+      inventoryItems: Array.isArray(parsed.inventoryItems) ? parsed.inventoryItems : (initialAppData.inventoryItems || []),
       marketplace: Array.isArray(parsed.marketplace) ? parsed.marketplace : (initialAppData.marketplace || []),
       rtCash: Array.isArray(parsed.rtCash) ? parsed.rtCash : (initialAppData.rtCash || []),
       monthlyFees: Array.isArray(parsed.monthlyFees) ? parsed.monthlyFees : (initialAppData.monthlyFees || []),
