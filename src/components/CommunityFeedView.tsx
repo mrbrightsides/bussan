@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { CommunityPost, CommunityEvent, EmergencyContact, PostCategory, RTCashItem } from '../types';
 import { PostModal } from './PostModal';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 import { createWhatsAppLink, formatRupiah } from '../utils/mediaUtils';
 import { INITIAL_RT_CASH_BALANCE } from '../data/initialData';
 
@@ -75,6 +76,22 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
   const [activeImageZoom, setActiveImageZoom] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState<boolean>(posts.length === 0);
 
+  // Security confirmation state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    itemName?: string;
+    confirmButtonText?: string;
+    isBulkAction?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   // Financial Kas RT calculation
   const totalIncome = rtCash.filter((c) => c.type === 'Pemasukan').reduce((s, c) => s + c.amount, 0);
   const totalExpense = rtCash.filter((c) => c.type === 'Pengeluaran').reduce((s, c) => s + c.amount, 0);
@@ -104,9 +121,31 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Apakah Anda yakin ingin mengosongkan semua kabar & berita warga? Tindakan ini akan menghapus semua artikel yang tersimpan.')) {
-      onClearAllPosts?.();
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Kosongkan Semua Kabar Warga',
+      message:
+        'Tindakan ini memerlukan persetujuan pengurus RT. Seluruh postingan, pengumuman, dan artikel kabar warga akan dihapus permanen dari server database.',
+      confirmButtonText: 'Kosongkan Sekarang',
+      isBulkAction: true,
+      onConfirm: () => {
+        onClearAllPosts?.();
+      },
+    });
+  };
+
+  const handleRequestDeletePost = (post: CommunityPost) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Hapus Kabar / Pengumuman',
+      message: 'Apakah Anda yakin ingin menghapus postingan kabar warga ini?',
+      itemName: post.title,
+      confirmButtonText: 'Ya, Hapus',
+      isBulkAction: false,
+      onConfirm: () => {
+        onDeletePost(post.id);
+      },
+    });
   };
 
   const getCategoryBadgeClass = (category: PostCategory) => {
@@ -521,11 +560,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
                           Edit
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Hapus berita "${post.title}"?`)) {
-                              onDeletePost(post.id);
-                            }
-                          }}
+                          onClick={() => handleRequestDeletePost(post)}
                           className="text-slate-400 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-[11px] font-semibold"
                         >
                           Hapus
@@ -712,6 +747,18 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
           />
         </div>
       )}
+
+      {/* Admin Security Confirmation Modal */}
+      <AdminConfirmationModal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        itemName={confirmDialog.itemName}
+        confirmButtonText={confirmDialog.confirmButtonText}
+        isBulkAction={confirmDialog.isBulkAction}
+      />
     </div>
   );
 };

@@ -13,6 +13,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { Participant, Competition, AgeCategory } from '../types';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 
 interface ParticipantsViewProps {
   participants: Participant[];
@@ -35,6 +36,7 @@ export const ParticipantsView: React.FC<ParticipantsViewProps> = ({
   const [compFilter, setCompFilter] = useState<string>(selectedCompFilter);
   const [rtFilter, setRtFilter] = useState<string>('All');
   const [ageFilter, setAgeFilter] = useState<string>('All');
+  const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null);
 
   const filtered = participants.filter((p) => {
     const matchesSearch =
@@ -207,7 +209,7 @@ export const ParticipantsView: React.FC<ParticipantsViewProps> = ({
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => onDeleteParticipant(p.id)}
+                          onClick={() => setParticipantToDelete(p)}
                           className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
                           title="Hapus Peserta"
                         >
@@ -222,6 +224,23 @@ export const ParticipantsView: React.FC<ParticipantsViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Safe Confirmation Modal */}
+      <AdminConfirmationModal
+        isOpen={Boolean(participantToDelete)}
+        onClose={() => setParticipantToDelete(null)}
+        onConfirm={() => {
+          if (participantToDelete) {
+            onDeleteParticipant(participantToDelete.id);
+            setParticipantToDelete(null);
+          }
+        }}
+        title="Hapus Pendaftaran Peserta"
+        message="Apakah Anda yakin ingin menghapus data pendaftaran peserta lomba ini?"
+        itemName={participantToDelete ? `${participantToDelete.name} (${participantToDelete.houseNo})` : undefined}
+        confirmButtonText="Ya, Hapus Peserta"
+        isBulkAction={false}
+      />
     </div>
   );
 };

@@ -18,6 +18,7 @@ import {
   Swords,
 } from 'lucide-react';
 import { Competition, Participant, AgeCategory, CompetitionStatus } from '../types';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 
 interface CompetitionsViewProps {
   competitions: Competition[];
@@ -43,6 +44,7 @@ export const CompetitionsView: React.FC<CompetitionsViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [competitionToDelete, setCompetitionToDelete] = useState<Competition | null>(null);
 
   const filtered = competitions.filter((comp) => {
     const matchesSearch =
@@ -234,7 +236,7 @@ export const CompetitionsView: React.FC<CompetitionsViewProps> = ({
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => onDeleteCompetition(comp.id)}
+                      onClick={() => setCompetitionToDelete(comp)}
                       title="Hapus Lomba"
                       className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
                     >
@@ -247,6 +249,23 @@ export const CompetitionsView: React.FC<CompetitionsViewProps> = ({
           })}
         </div>
       )}
+
+      {/* Safe Confirmation Modal */}
+      <AdminConfirmationModal
+        isOpen={Boolean(competitionToDelete)}
+        onClose={() => setCompetitionToDelete(null)}
+        onConfirm={() => {
+          if (competitionToDelete) {
+            onDeleteCompetition(competitionToDelete.id);
+            setCompetitionToDelete(null);
+          }
+        }}
+        title="Hapus Agenda Lomba"
+        message="Apakah Anda yakin ingin menghapus perlombaan ini? Seluruh data pendaftaran peserta lomba terkait juga akan terpengaruh."
+        itemName={competitionToDelete ? competitionToDelete.name : undefined}
+        confirmButtonText="Ya, Hapus Lomba"
+        isBulkAction={false}
+      />
     </div>
   );
 };

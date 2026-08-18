@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Donor } from '../types';
 import { formatRupiah } from '../utils/formatters';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 
 interface DonorsViewProps {
   donors: Donor[];
@@ -29,6 +30,7 @@ export const DonorsView: React.FC<DonorsViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('All');
+  const [donorToDelete, setDonorToDelete] = useState<Donor | null>(null);
 
   const totalIncome = donors.reduce((sum, d) => sum + d.amount, 0);
 
@@ -154,7 +156,7 @@ export const DonorsView: React.FC<DonorsViewProps> = ({
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => onDeleteDonor(d.id)}
+                          onClick={() => setDonorToDelete(d)}
                           className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
                           title="Hapus Donatur"
                         >
@@ -169,6 +171,23 @@ export const DonorsView: React.FC<DonorsViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Safe Confirmation Modal */}
+      <AdminConfirmationModal
+        isOpen={Boolean(donorToDelete)}
+        onClose={() => setDonorToDelete(null)}
+        onConfirm={() => {
+          if (donorToDelete) {
+            onDeleteDonor(donorToDelete.id);
+            setDonorToDelete(null);
+          }
+        }}
+        title="Hapus Catatan Donasi"
+        message="Apakah Anda yakin ingin menghapus catatan donasi warga ini?"
+        itemName={donorToDelete ? `${donorToDelete.name} (${formatRupiah(donorToDelete.amount)})` : undefined}
+        confirmButtonText="Ya, Hapus Donasi"
+        isBulkAction={false}
+      />
     </div>
   );
 };

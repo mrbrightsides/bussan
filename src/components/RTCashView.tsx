@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { RTCashItem, MonthlyFeeRecord } from '../types';
 import { RTCashModal } from './RTCashModal';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 import {
   initialMonthlyFees,
   INITIAL_RT_CASH_BALANCE,
@@ -65,6 +66,50 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<RTCashItem | null>(null);
   const [copiedNarrative, setCopiedNarrative] = useState(false);
+
+  // Security confirmation state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    itemName?: string;
+    confirmButtonText?: string;
+    isBulkAction?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const handleRequestDelete = (item: RTCashItem) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Hapus Catatan Transaksi Kas',
+      message: 'Apakah Anda yakin ingin menghapus catatan transaksi kas ini?',
+      itemName: `${item.title} (${formatRupiah(item.amount)})`,
+      confirmButtonText: 'Ya, Hapus Transaksi',
+      isBulkAction: false,
+      onConfirm: () => {
+        onDeleteCashItem(item.id);
+      },
+    });
+  };
+
+  const handleRequestSyncOfficial = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Sinkronisasi Data Kas Resmi RT',
+      message:
+        'Apakah Anda ingin menyinkronkan dan memuat ulang data resmi Buku Kas RT periode 14 Juli - 14 Agustus 2026 (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)?',
+      confirmButtonText: 'Sinkronkan Sekarang',
+      isBulkAction: false,
+      onConfirm: () => {
+        onResetOfficialRTCash?.();
+      },
+    });
+  };
 
   // Calculations for Kas Transaksi
   const initialBalance = INITIAL_RT_CASH_BALANCE; // Rp 9.949.000
@@ -666,11 +711,7 @@ _Pengurus RT 22 Green Bussan Village_`;
           <div className="flex flex-wrap items-center gap-2.5">
             {onResetOfficialRTCash && (
               <button
-                onClick={() => {
-                  if (window.confirm('Sinkronkan dan muat ulang data resmi Buku Kas RT periode 14 Juli - 14 Agustus 2026 (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)?')) {
-                    onResetOfficialRTCash();
-                  }
-                }}
+                onClick={handleRequestSyncOfficial}
                 title="Sinkronkan ke Data Kas Resmi RT (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)"
                 className="bg-white/10 hover:bg-white/20 text-white font-medium text-xs px-3 py-2.5 rounded-2xl border border-white/20 backdrop-blur-sm transition-all flex items-center gap-1.5"
               >
@@ -1476,7 +1517,7 @@ _Pengurus RT 22 Green Bussan Village_`;
                             Edit
                           </button>
                           <button
-                            onClick={() => onDeleteCashItem(item.id)}
+                            onClick={() => handleRequestDelete(item)}
                             className="px-2 py-1 text-slate-400 hover:text-rose-600 text-xs font-semibold rounded hover:bg-rose-50"
                             title="Hapus"
                           >
@@ -1524,6 +1565,17 @@ _Pengurus RT 22 Green Bussan Village_`;
         }}
         onSave={onSaveCashItem}
         itemToEdit={itemToEdit}
+      />
+
+      <AdminConfirmationModal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        itemName={confirmDialog.itemName}
+        confirmButtonText={confirmDialog.confirmButtonText}
+        isBulkAction={confirmDialog.isBulkAction}
       />
     </div>
   );

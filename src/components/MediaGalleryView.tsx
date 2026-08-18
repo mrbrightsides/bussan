@@ -25,6 +25,7 @@ import {
 import { MediaItem } from '../types';
 import { MediaLightboxModal } from './MediaLightboxModal';
 import { MediaUploadModal } from './MediaUploadModal';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 
 interface MediaGalleryViewProps {
   mediaList: MediaItem[];
@@ -52,6 +53,22 @@ export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+  // Security confirmation state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    itemName?: string;
+    confirmButtonText?: string;
+    isBulkAction?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   // Extract unique album names
   const existingAlbums = Array.from(new Set(mediaList.map((m) => m.albumName).filter(Boolean)));
 
@@ -73,17 +90,35 @@ export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
   const videoCount = mediaList.filter((m) => m.type === 'video').length;
 
   const handleClearAll = () => {
-    if (
-      window.confirm(
-        'Kosongkan semua foto & video di galeri agar warga bisa mulai mengunggah foto asli dari nol?'
-      )
-    ) {
-      if (onClearAllMedia) {
-        onClearAllMedia();
-      } else {
-        mediaList.forEach((m) => onDeleteMedia(m.id));
-      }
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Kosongkan Seluruh Galeri',
+      message:
+        'Tindakan ini memerlukan persetujuan pengurus RT. Seluruh foto dan video di galeri akan dikosongkan secara permanen dari server.',
+      confirmButtonText: 'Kosongkan Galeri',
+      isBulkAction: true,
+      onConfirm: () => {
+        if (onClearAllMedia) {
+          onClearAllMedia();
+        } else {
+          mediaList.forEach((m) => onDeleteMedia(m.id));
+        }
+      },
+    });
+  };
+
+  const handleRequestDelete = (item: MediaItem) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Hapus Dokumentasi',
+      message: 'Apakah Anda yakin ingin menghapus foto/video ini dari arsip galeri warga?',
+      itemName: item.title,
+      confirmButtonText: 'Ya, Hapus',
+      isBulkAction: false,
+      onConfirm: () => {
+        onDeleteMedia(item.id);
+      },
+    });
   };
 
   return (
@@ -483,11 +518,7 @@ export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
                         </button>
 
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Hapus dokumentasi "${item.title}"?`)) {
-                              onDeleteMedia(item.id);
-                            }
-                          }}
+                          onClick={() => handleRequestDelete(item)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                           title="Hapus Foto / Video"
                         >
@@ -520,11 +551,27 @@ export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
           onNavigate={(newIdx) => setLightboxIndex(newIdx)}
           onLike={onLikeMedia}
           onDelete={(id) => {
-            onDeleteMedia(id);
+            const item = mediaList.find((m) => m.id === id);
+            if (item) {
+              handleRequestDelete(item);
+            } else {
+              onDeleteMedia(id);
+            }
             setLightboxIndex(null);
           }}
         />
       )}
+
+      <AdminConfirmationModal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        itemName={confirmDialog.itemName}
+        confirmButtonText={confirmDialog.confirmButtonText}
+        isBulkAction={confirmDialog.isBulkAction}
+      />
     </div>
   );
 };

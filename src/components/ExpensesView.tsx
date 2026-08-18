@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Expense, ExpenseCategory } from '../types';
 import { formatRupiah } from '../utils/formatters';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 
 interface ExpensesViewProps {
   expenses: Expense[];
@@ -28,6 +29,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
 
   const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
 
@@ -149,7 +151,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => onDeleteExpense(e.id)}
+                          onClick={() => setExpenseToDelete(e)}
                           className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
                           title="Hapus Pengeluaran"
                         >
@@ -164,6 +166,23 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Safe Confirmation Modal */}
+      <AdminConfirmationModal
+        isOpen={Boolean(expenseToDelete)}
+        onClose={() => setExpenseToDelete(null)}
+        onConfirm={() => {
+          if (expenseToDelete) {
+            onDeleteExpense(expenseToDelete.id);
+            setExpenseToDelete(null);
+          }
+        }}
+        title="Hapus Catatan Pengeluaran"
+        message="Apakah Anda yakin ingin menghapus catatan pengeluaran belanja panitia ini?"
+        itemName={expenseToDelete ? `${expenseToDelete.title} (${formatRupiah(expenseToDelete.amount)})` : undefined}
+        confirmButtonText="Ya, Hapus Pengeluaran"
+        isBulkAction={false}
+      />
     </div>
   );
 };

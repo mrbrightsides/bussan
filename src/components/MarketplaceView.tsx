@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { MarketplaceItem, MarketplaceCategory } from '../types';
 import { MarketplaceModal } from './MarketplaceModal';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 import { createWhatsAppLink } from '../utils/mediaUtils';
 
 interface MarketplaceViewProps {
@@ -51,6 +52,22 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<MarketplaceItem | null>(null);
 
+  // Security confirmation state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    itemName?: string;
+    confirmButtonText?: string;
+    isBulkAction?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const filteredItems = items.filter((item) => {
     const matchCat = selectedCategory === 'Semua' || item.category === selectedCategory;
     const matchSearch =
@@ -63,17 +80,35 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
   });
 
   const handleClearAll = () => {
-    if (
-      window.confirm(
-        'Kosongkan semua lapak jualan agar warga Green Bussan bisa mulai mendaftarkan usaha & produk asli mereka?'
-      )
-    ) {
-      if (onClearAllItems) {
-        onClearAllItems();
-      } else {
-        items.forEach((item) => onDeleteItem(item.id));
-      }
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Kosongkan Semua Lapak UMKM',
+      message:
+        'Tindakan ini memerlukan persetujuan pengurus RT. Semua produk dan lapak jualan warga akan dihapus permanen dari server database.',
+      confirmButtonText: 'Kosongkan Sekarang',
+      isBulkAction: true,
+      onConfirm: () => {
+        if (onClearAllItems) {
+          onClearAllItems();
+        } else {
+          items.forEach((item) => onDeleteItem(item.id));
+        }
+      },
+    });
+  };
+
+  const handleRequestDelete = (item: MarketplaceItem) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Hapus Lapak UMKM',
+      message: 'Apakah Anda yakin ingin menghapus produk/jasa ini dari direktori UMKM warga?',
+      itemName: item.title,
+      confirmButtonText: 'Ya, Hapus',
+      isBulkAction: false,
+      onConfirm: () => {
+        onDeleteItem(item.id);
+      },
+    });
   };
 
   const foodCount = items.filter((i) => i.category === 'Kuliner & Makanan').length;
@@ -435,11 +470,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                       Edit
                     </button>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Hapus lapak "${item.title}"?`)) {
-                          onDeleteItem(item.id);
-                        }
-                      }}
+                      onClick={() => handleRequestDelete(item)}
                       className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium"
                       title="Hapus Lapak"
                     >
@@ -461,6 +492,17 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         }}
         onSave={onSaveItem}
         itemToEdit={itemToEdit}
+      />
+
+      <AdminConfirmationModal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        itemName={confirmDialog.itemName}
+        confirmButtonText={confirmDialog.confirmButtonText}
+        isBulkAction={confirmDialog.isBulkAction}
       />
     </div>
   );

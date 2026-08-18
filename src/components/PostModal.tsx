@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Image as ImageIcon, Sparkles, Pin, CheckCircle2, Upload } from 'lucide-react';
 import { CommunityPost, PostCategory } from '../types';
 import { compressImageFile } from '../utils/mediaUtils';
@@ -28,18 +28,47 @@ export const PostModal: React.FC<PostModalProps> = ({
   onSave,
   postToEdit,
 }) => {
-  const [title, setTitle] = useState(postToEdit?.title || '');
-  const [content, setContent] = useState(postToEdit?.content || '');
-  const [category, setCategory] = useState<PostCategory>(postToEdit?.category || 'Berita Warga');
-  const [authorName, setAuthorName] = useState(postToEdit?.authorName || '');
-  const [authorRole, setAuthorRole] = useState(postToEdit?.authorRole || 'Warga Green Bussan');
-  const [isPinned, setIsPinned] = useState(postToEdit?.isPinned || false);
-  const [tagsInput, setTagsInput] = useState(postToEdit?.tags?.join(', ') || '');
-  const [imagePreview, setImagePreview] = useState<string | null>(postToEdit?.images?.[0] || null);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [category, setCategory] = useState<PostCategory>('Berita Warga');
+  const [authorName, setAuthorName] = useState('');
+  const [authorRole, setAuthorRole] = useState('Warga Green Bussan');
+  const [isPinned, setIsPinned] = useState(false);
+  const [tagsInput, setTagsInput] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionInfo, setCompressionInfo] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (postToEdit) {
+        setTitle(postToEdit.title || '');
+        setContent(postToEdit.content || '');
+        setCategory(postToEdit.category || 'Berita Warga');
+        setAuthorName(postToEdit.authorName || '');
+        setAuthorRole(postToEdit.authorRole || 'Warga Green Bussan');
+        setIsPinned(postToEdit.isPinned || false);
+        setTagsInput(postToEdit.tags?.join(', ') || '');
+        setImagePreview(postToEdit.images?.[0] || null);
+      } else {
+        setTitle('');
+        setContent('');
+        setCategory('Berita Warga');
+        setAuthorName('');
+        setAuthorRole('Warga Green Bussan');
+        setIsPinned(false);
+        setTagsInput('');
+        setImagePreview(null);
+      }
+      setCompressionInfo(null);
+      setIsCompressing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isOpen, postToEdit]);
 
   if (!isOpen) return null;
 

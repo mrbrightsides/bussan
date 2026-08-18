@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Film, Image as ImageIcon, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { MediaItem, MediaType } from '../types';
 import { compressImageFile, extractYouTubeEmbedUrl } from '../utils/mediaUtils';
@@ -36,6 +36,35 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
   const [videoPreviewEmbed, setVideoPreviewEmbed] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset form to clean zero-state every time the modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setMediaType('photo');
+      setTitle('');
+      setDescription('');
+      setAlbumName(existingAlbums[0] || 'Kegiatan Warga');
+      setCustomAlbum('');
+      setUploadedBy('');
+      setDate(
+        new Date().toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      );
+      setTagInput('');
+      setImagePreview(null);
+      setImageUrlInput('');
+      setCompressionInfo(null);
+      setIsCompressing(false);
+      setVideoUrlInput('');
+      setVideoPreviewEmbed(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

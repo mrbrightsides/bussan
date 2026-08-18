@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { CommunityEvent, EventCategory } from '../types';
 import { EventModal } from './EventModal';
+import { AdminConfirmationModal } from './AdminConfirmationModal';
 
 interface EventsViewProps {
   events: CommunityEvent[];
@@ -51,6 +52,22 @@ export const EventsView: React.FC<EventsViewProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<CommunityEvent | null>(null);
 
+  // Security confirmation state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    itemName?: string;
+    confirmButtonText?: string;
+    isBulkAction?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const filteredEvents = events.filter((evt) => {
     const matchCat = selectedCategory === 'Semua' || evt.category === selectedCategory;
     const matchStatus = statusFilter === 'all' || evt.status === statusFilter;
@@ -65,17 +82,35 @@ export const EventsView: React.FC<EventsViewProps> = ({
   });
 
   const handleClearAll = () => {
-    if (
-      window.confirm(
-        'Kosongkan semua jadwal agenda kegiatan agar pengurus RT dan warga bisa mulai mengisi jadwal agenda asli komplek Green Bussan?'
-      )
-    ) {
-      if (onClearAllEvents) {
-        onClearAllEvents();
-      } else {
-        events.forEach((evt) => onDeleteEvent(evt.id));
-      }
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Kosongkan Semua Agenda Kegiatan',
+      message:
+        'Tindakan ini memerlukan persetujuan pengurus RT. Seluruh jadwal dan agenda kegiatan warga akan dihapus permanen dari server database.',
+      confirmButtonText: 'Kosongkan Sekarang',
+      isBulkAction: true,
+      onConfirm: () => {
+        if (onClearAllEvents) {
+          onClearAllEvents();
+        } else {
+          events.forEach((evt) => onDeleteEvent(evt.id));
+        }
+      },
+    });
+  };
+
+  const handleRequestDelete = (evt: CommunityEvent) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Hapus Agenda Kegiatan',
+      message: 'Apakah Anda yakin ingin menghapus jadwal agenda kegiatan ini dari kalender warga?',
+      itemName: evt.title,
+      confirmButtonText: 'Ya, Hapus',
+      isBulkAction: false,
+      onConfirm: () => {
+        onDeleteEvent(evt.id);
+      },
+    });
   };
 
   const handleShareWhatsApp = (evt: CommunityEvent) => {
@@ -495,11 +530,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
                       Edit
                     </button>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Hapus jadwal kegiatan "${evt.title}"?`)) {
-                          onDeleteEvent(evt.id);
-                        }
-                      }}
+                      onClick={() => handleRequestDelete(evt)}
                       className="text-slate-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors font-medium"
                     >
                       Hapus
@@ -520,6 +551,17 @@ export const EventsView: React.FC<EventsViewProps> = ({
         }}
         onSave={onSaveEvent}
         eventToEdit={eventToEdit}
+      />
+
+      <AdminConfirmationModal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        itemName={confirmDialog.itemName}
+        confirmButtonText={confirmDialog.confirmButtonText}
+        isBulkAction={confirmDialog.isBulkAction}
       />
     </div>
   );
