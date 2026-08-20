@@ -11,8 +11,8 @@ interface AdminConfirmationModalProps {
   message: string;
   itemName?: string;
   confirmButtonText?: string;
-  isBulkAction?: boolean; // If true, requires PIN
-  requirePin?: boolean;
+  isBulkAction?: boolean;
+  requirePin?: boolean; // Default true: every delete action requires admin PIN
 }
 
 export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
@@ -24,12 +24,12 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
   itemName,
   confirmButtonText = 'Ya, Hapus Permanen',
   isBulkAction = false,
-  requirePin = false,
+  requirePin = true,
 }) => {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const needsPin = isBulkAction || requirePin;
+  const needsPin = requirePin || isBulkAction;
 
   useEffect(() => {
     if (isOpen) {
@@ -67,7 +67,7 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
             </div>
             <div>
               <div className="text-xs font-bold text-rose-600 uppercase tracking-wider">
-                Otorisasi Pengurus RT
+                Otorisasi Pengurus Kompleks dan Admin Web
               </div>
               <h3 className="text-lg font-bold text-slate-800">{title}</h3>
             </div>
@@ -107,7 +107,7 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
           {needsPin && (
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <label className="block text-xs font-bold text-slate-700">
-                Masukkan PIN Otorisasi Pengurus RT:
+                Masukkan PIN Otorisasi:
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -115,7 +115,7 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Masukkan PIN pengurus..."
+                  placeholder="Masukkan PIN..."
                   value={pinInput}
                   onChange={(e) => {
                     setPinInput(e.target.value);
@@ -145,7 +145,7 @@ export const AdminConfirmationModal: React.FC<AdminConfirmationModalProps> = ({
               </div>
               {pinError && (
                 <p className="text-xs text-rose-600 font-medium">
-                  PIN otorisasi salah. Hanya pengurus RT yang berwenang melakukan tindakan ini.
+                  PIN otorisasi salah. Hanya pengurus dan admin yang berwenang melakukan tindakan ini.
                 </p>
               )}
             </div>
