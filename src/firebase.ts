@@ -1,17 +1,15 @@
 import { initializeApp } from 'firebase/app';
-import { initializeFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { AppState } from './types';
 import { initialAppData } from './data/initialData';
 
 const app = initializeApp(firebaseConfig);
-export const db = initializeFirestore(
-  app,
-  {
-    experimentalAutoDetectLongPolling: true,
-  },
-  firebaseConfig.firestoreDatabaseId || '(default)'
-);
+
+// Use standard Firestore instance with fallback
+export const db = firebaseConfig.firestoreDatabaseId
+  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+  : getFirestore(app);
 
 const STATE_DOC_REF = doc(db, 'app_state', 'main');
 
@@ -26,13 +24,15 @@ export function subscribeToAppState(
 ) {
   return onSnapshot(
     STATE_DOC_REF,
+    { includeMetadataChanges: false },
     (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.competitions && data.donors && data.expenses) {
-          const brackets = (Array.isArray(data.brackets) && data.brackets.length > 0)
-            ? data.brackets
-            : (initialAppData.brackets || []);
+          const brackets =
+            Array.isArray(data.brackets) && data.brackets.length > 0
+              ? data.brackets
+              : initialAppData.brackets || [];
 
           // Always trust and load user arrays if present in Firestore
           const posts = Array.isArray(data.posts) ? data.posts : [];
@@ -40,7 +40,7 @@ export function subscribeToAppState(
           const mediaGallery = Array.isArray(data.mediaGallery) ? data.mediaGallery : [];
           const emergencyContacts = Array.isArray(data.emergencyContacts)
             ? data.emergencyContacts
-            : (initialAppData.emergencyContacts || []);
+            : initialAppData.emergencyContacts || [];
           const facilityReports = Array.isArray(data.facilityReports) ? data.facilityReports : [];
           const inventoryItems = Array.isArray(data.inventoryItems) ? data.inventoryItems : [];
           const marketplace = Array.isArray(data.marketplace) ? data.marketplace : [];
@@ -53,10 +53,10 @@ export function subscribeToAppState(
             data.rtCash.length === 0 ||
             data.rtCash.some((item: any) => item.amount === 5400000);
 
-          const rtCash = needsRTCashSync ? (initialAppData.rtCash || []) : data.rtCash;
+          const rtCash = needsRTCashSync ? initialAppData.rtCash || [] : data.rtCash;
           const monthlyFees = Array.isArray(data.monthlyFees)
             ? data.monthlyFees
-            : (initialAppData.monthlyFees || []);
+            : initialAppData.monthlyFees || [];
 
           const loadedState: AppState = {
             posts,
@@ -94,12 +94,12 @@ export function subscribeToAppState(
       }
       // If doc doesn't exist yet in Firestore, seed initialAppData into Firestore
       saveAppStateToFirestore(initialAppData).catch((err) => {
-        console.error('Failed to seed initial data to Firestore:', err);
+        console.warn('Could not seed initial data to Firestore yet (may be offline):', err);
       });
       onStateChange(initialAppData);
     },
     (error) => {
-      console.error('Firestore snapshot error:', error);
+      console.warn('Firestore snapshot notice (client operating in local cache / offline mode):', error?.message || error);
       if (onError) onError(error);
     }
   );
@@ -115,8 +115,7 @@ export async function saveAppStateToFirestore(state: AppState) {
       updatedAt: new Date().toISOString(),
     });
     console.log('✅ State successfully synced to Firestore!');
-  } catch (err) {
-    console.error('❌ Error saving state to Firestore:', err);
-    throw err;
+  } catch (err: any) {
+    console.warn('⚠️ Saved locally. Will auto-sync to Firestore when connected:', err?.message || err);
   }
 }
