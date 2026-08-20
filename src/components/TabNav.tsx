@@ -65,7 +65,7 @@ export const TabNav: React.FC<TabNavProps> = ({ activeTab, onChangeTab, counts }
     },
     {
       id: 'rtCash',
-      label: 'Kas Warga & Iuran',
+      label: 'Kas Warga',
       icon: Wallet,
     },
     {
