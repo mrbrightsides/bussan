@@ -10,7 +10,7 @@ interface ContactModalProps {
 }
 
 const CATEGORIES: EmergencyCategory[] = [
-  'Pengurus RT/RW',
+  'Pengurus Kompleks',
   'Pemerintahan & Kelurahan',
   'Keamanan & Darurat',
   'Kesehatan & Medis',
@@ -27,7 +27,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
-  const [category, setCategory] = useState<EmergencyCategory>('Pengurus RT/RW');
+  const [category, setCategory] = useState<EmergencyCategory>('Pengurus Kompleks');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
@@ -42,7 +42,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
       if (contactToEdit) {
         setName(contactToEdit.name || '');
         setRole(contactToEdit.role || '');
-        setCategory(contactToEdit.category || 'Pengurus RT/RW');
+        setCategory(contactToEdit.category || 'Pengurus Kompleks');
         setPhone(contactToEdit.phone || '');
         setWhatsapp(contactToEdit.whatsapp || '');
         setEmail(contactToEdit.email || '');
@@ -54,7 +54,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
         // Mode Tambah Kontak Baru: Kosongkan seluruh input
         setName('');
         setRole('');
-        setCategory('Pengurus RT/RW');
+        setCategory('Pengurus Kompleks');
         setPhone('');
         setWhatsapp('');
         setEmail('');

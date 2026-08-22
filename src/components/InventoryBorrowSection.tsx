@@ -154,10 +154,10 @@ export const InventoryBorrowSection: React.FC<InventoryBorrowSectionProps> = ({
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 bg-teal-500/20 border border-teal-400/30 text-teal-200 text-xs font-semibold px-3 py-1 rounded-full">
               <Package className="w-3.5 h-3.5 text-teal-300" />
-              Sarana & Prasarana Milik Bersama RT 01
+              Sarana & Prasarana Milik Bersama Warga Green Bussan
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              Katalog Peminjaman Inventaris RT
+              Katalog Peminjaman Inventaris
             </h2>
             <p className="text-teal-100/80 text-xs sm:text-sm max-w-xl leading-relaxed">
               Fasilitas bersama seperti tenda pesta, kursi lipat, sound system/mic wireless, mesin potong rumput, terpal, dan genset siap dipinjam oleh seluruh warga Green Bussan.
@@ -227,7 +227,7 @@ export const InventoryBorrowSection: React.FC<InventoryBorrowSectionProps> = ({
                 Semua Barang Tersedia Lengkap!
               </h4>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                Saat ini tidak ada barang inventaris RT yang sedang dipinjam keluar. Semua stok aman di lokasi penyimpanan.
+                Saat ini tidak ada barang inventaris yang sedang dipinjam keluar. Semua stok aman di lokasi penyimpanan.
               </p>
               <button
                 onClick={() => setViewMode('catalog')}
@@ -281,7 +281,7 @@ export const InventoryBorrowSection: React.FC<InventoryBorrowSectionProps> = ({
                       <a
                         href={createWhatsAppLink(
                           record.borrowerPhone,
-                          `Halo ${record.borrowerName}, kami dari pengurus RT 01 Green Bussan Village ingin konfirmasi peminjaman ${item.name}...`
+                          `Halo ${record.borrowerName}, kami dari pengurus Kompleks Green Bussan Village ingin konfirmasi peminjaman ${item.name}...`
                         )}
                         target="_blank"
                         rel="noreferrer"
@@ -350,12 +350,12 @@ export const InventoryBorrowSection: React.FC<InventoryBorrowSectionProps> = ({
               <div className="space-y-1">
                 <h4 className="text-base font-bold text-slate-800">
                   {inventoryItems.length === 0
-                    ? 'Belum Ada Daftar Inventaris RT'
+                    ? 'Belum Ada Daftar Inventaris'
                     : 'Tidak ada barang inventaris yang sesuai'}
                 </h4>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
                   {inventoryItems.length === 0
-                    ? 'Daftar inventaris sarana & prasarana milik RT masih kosong. Warga atau pengurus RT dapat menambahkan barang inventaris baru untuk dipinjamkan bersama.'
+                    ? 'Daftar inventaris sarana & prasarana milik bersama masih kosong. Warga atau pengurus dapat menambahkan barang inventaris baru untuk dipinjamkan bersama.'
                     : 'Silakan ubah filter kategori atau kata kunci pencarian Anda.'}
                 </p>
               </div>

@@ -86,7 +86,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
       isOpen: true,
       title: 'Kosongkan Semua Agenda Kegiatan',
       message:
-        'Tindakan ini memerlukan persetujuan pengurus RT. Seluruh jadwal dan agenda kegiatan warga akan dihapus permanen dari server database.',
+        'Tindakan ini memerlukan persetujuan pengurus. Seluruh jadwal dan agenda kegiatan warga akan dihapus permanen dari server database.',
       confirmButtonText: 'Kosongkan Sekarang',
       isBulkAction: true,
       onConfirm: () => {
@@ -114,7 +114,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
   };
 
   const handleShareWhatsApp = (evt: CommunityEvent) => {
-    const picName = evt.organizer || evt.pic || 'Pengurus RT';
+    const picName = evt.organizer || evt.pic || 'Pengurus';
     const text = `*AGENDA KEGIATAN WARGA GREEN BUSSAN*\n\n📌 *${evt.title}*\n📂 Kategori: ${evt.category}\n🗓️ Hari/Tgl: ${evt.date}\n⏰ Waktu: ${evt.time}\n📍 Lokasi: ${evt.location}\n👤 PIC / Kontak: ${picName}\n\n📝 Keterangan:\n${evt.description}\n\n_Mari bersama-sama hadir dan berpartisipasi memajukan lingkungan kita!_`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -430,7 +430,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
             <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
               {searchQuery
                 ? 'Coba ubah kata kunci pencarian atau pilih filter status "Semua".'
-                : 'Belum ada agenda kegiatan yang dijadwalkan. Pengurus RT dan warga dapat menambahkan jadwal kegiatan baru kapan saja.'}
+                : 'Belum ada agenda kegiatan yang dijadwalkan. Pengurus dan warga dapat menambahkan jadwal kegiatan baru kapan saja.'}
             </p>
           </div>
 
@@ -464,7 +464,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {filteredEvents.map((evt) => {
-            const picName = evt.organizer || evt.pic || 'Pengurus RT';
+            const picName = evt.organizer || evt.pic || 'Pengurus';
 
             return (
               <div

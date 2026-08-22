@@ -100,9 +100,9 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
   const handleRequestSyncOfficial = () => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Sinkronisasi Data Kas Resmi RT',
+      title: 'Sinkronisasi Data Kas Resmi',
       message:
-        'Apakah Anda ingin menyinkronkan dan memuat ulang data resmi Buku Kas RT periode 14 Juli - 14 Agustus 2026 (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)?',
+        'Apakah Anda ingin menyinkronkan dan memuat ulang data resmi Buku Kas periode 14 Juli - 14 Agustus 2026 (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)?',
       confirmButtonText: 'Sinkronkan Sekarang',
       isBulkAction: false,
       onConfirm: () => {
@@ -232,7 +232,7 @@ Total pengeluaran sebesar ${formatRupiah(totalExpense)} dialokasikan untuk opera
 *Perhitungan Saldo Akhir:*
 ${formatRupiah(initialBalance)} (Saldo Awal) + ${formatRupiah(totalIncome)} (Pemasukan) - ${formatRupiah(totalExpense)} (Pengeluaran) = *${formatRupiah(finalBalance)}*
 
-_Pengurus RT 22 Green Bussan Village_`;
+_Pengurus Green Bussan Village_`;
 
     navigator.clipboard.writeText(narrativeText);
     setCopiedNarrative(true);
@@ -372,9 +372,9 @@ _Pengurus RT 22 Green Bussan Village_`;
         <div class="signature-area">
           <div class="sig-box">
             <p>Mengetahui,</p>
-            <p style="font-weight: bold; margin-top: 5px;">Ketua RT 22 Green Bussan</p>
+            <p style="font-weight: bold; margin-top: 5px;">Bendahara Green Bussan Village</p>
             <div style="height: 45px;"></div>
-            <p style="text-decoration: underline; font-weight: bold;">( Akhmad Khudri )</p>
+            <p style="text-decoration: underline; font-weight: bold;">( Riyadi )</p>
           </div>
           <div class="sig-box">
             <p>Palembang, 14 Agustus 2026</p>
@@ -437,7 +437,7 @@ _Pengurus RT 22 Green Bussan Village_`;
       <body>
         <div class="header">
           <h1 class="title">IURAN BULANAN PERUMAHAN GREEN BUSSAN VILLAGE</h1>
-          <p class="subtitle">Rekap Matriks Pembayaran Warga RT 22 Periode Januari - Juli 2026</p>
+          <p class="subtitle">Rekap Matriks Pembayaran Warga Green Bussan Village Periode Januari - Juli 2026</p>
           <p class="subtitle">Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
 
@@ -516,9 +516,9 @@ _Pengurus RT 22 Green Bussan Village_`;
         <div class="signature-area">
           <div class="sig-box">
             <p>Mengetahui,</p>
-            <p style="font-weight: bold; margin-top: 5px;">Ketua RT 22 Green Bussan</p>
+            <p style="font-weight: bold; margin-top: 5px;">Ketua Lingkungan Green Bussan Village</p>
             <div style="height: 45px;"></div>
-            <p style="text-decoration: underline; font-weight: bold;">( Akhmad Khudri )</p>
+            <p style="text-decoration: underline; font-weight: bold;">( Tri Sulistyo )</p>
           </div>
           <div class="sig-box">
             <p>Palembang, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
@@ -583,7 +583,7 @@ _Pengurus RT 22 Green Bussan Village_`;
       <body>
         <div class="header">
           <h1 class="title">REKAP TRANSAKSI KAS WARGA</h1>
-          <p class="subtitle">RT 22 Green Bussan Village • Periode 14 Juli s/d 14 Agustus 2026</p>
+          <p class="subtitle">Green Bussan Village • Periode 14 Juli s/d 14 Agustus 2026</p>
         </div>
 
         <div class="summary-box">
@@ -665,9 +665,9 @@ _Pengurus RT 22 Green Bussan Village_`;
         <div class="signature-area">
           <div class="sig-box">
             <p>Mengetahui,</p>
-            <p style="font-weight: bold; margin-top: 5px;">Ketua RT 22 Green Bussan</p>
+            <p style="font-weight: bold; margin-top: 5px;">Ketua Lingkungan Green Bussan Village</p>
             <div style="height: 45px;"></div>
-            <p style="text-decoration: underline; font-weight: bold;">( Akhmad Khudri )</p>
+            <p style="text-decoration: underline; font-weight: bold;">( Tri Sulistyo )</p>
           </div>
           <div class="sig-box">
             <p>Palembang, 14 Agustus 2026</p>
@@ -698,7 +698,7 @@ _Pengurus RT 22 Green Bussan Village_`;
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 bg-emerald-700/80 border border-emerald-500/30 text-emerald-200 text-xs font-semibold px-3 py-1 rounded-full">
               <ShieldCheck className="w-3.5 h-3.5" />
-              Transparansi Keuangan RT 22 Green Bussan Village
+              Transparansi Keuangan Green Bussan Village
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               Buku Kas & Iuran Warga
@@ -712,7 +712,7 @@ _Pengurus RT 22 Green Bussan Village_`;
             {onResetOfficialRTCash && (
               <button
                 onClick={handleRequestSyncOfficial}
-                title="Sinkronkan ke Data Kas Resmi RT (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)"
+                title="Sinkronkan ke Data Kas Resmi (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)"
                 className="bg-white/10 hover:bg-white/20 text-white font-medium text-xs px-3 py-2.5 rounded-2xl border border-white/20 backdrop-blur-sm transition-all flex items-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-emerald-300" />
@@ -1164,7 +1164,7 @@ _Pengurus RT 22 Green Bussan Village_`;
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800/80 pt-1">
-                Saldo kas warga per 14 Agustus 2026 tersedia di rekening & kas operasional bendahara RT 22.
+                Saldo kas warga per 14 Agustus 2026 tersedia di rekening & kas operasional bendahara.
               </p>
             </div>
           </div>

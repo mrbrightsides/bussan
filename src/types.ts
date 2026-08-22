@@ -103,6 +103,7 @@ export interface TournamentBracket {
 export type PostCategory =
   | 'Berita Warga'
   | 'Liputan 17an & Kegiatan'
+  | 'Pengumuman'
   | 'Pengumuman RT'
   | 'Kerja Bakti'
   | 'Iuran & Kas'
@@ -133,6 +134,7 @@ export type EventCategory =
   | 'Gotong Royong'
   | 'Rapat RT'
   | 'Rapat Warga'
+  | 'Rapat Warga & Arisan'
   | 'Senam & Olahraga'
   | 'Olahraga & Senam'
   | 'Pengajian / Arisan'
@@ -177,6 +179,7 @@ export interface MediaItem {
 
 export type EmergencyCategory =
   | 'Keamanan & Darurat'
+  | 'Pengurus Kompleks'
   | 'Pengurus RT/RW'
   | 'Pemerintahan & Kelurahan'
   | 'Kesehatan & Medis'
@@ -235,6 +238,7 @@ export interface FacilityReport {
 export type InventoryCategory =
   | 'Tenda & Terpal'
   | 'Kursi & Meja'
+  | 'Sound System, Kabel, & Lampu'
   | 'Sound System & Pengeras Suara'
   | 'Alat Kebersihan & Mesin Rumput'
   | 'Peralatan Masak & Dapur Warga'

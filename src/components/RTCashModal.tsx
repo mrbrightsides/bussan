@@ -20,7 +20,7 @@ export const RTCashModal: React.FC<RTCashModalProps> = ({
   const [category, setCategory] = useState('Iuran Bulanan Warga');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
-  const [recordedBy, setRecordedBy] = useState('Bendahara RT 01');
+  const [recordedBy, setRecordedBy] = useState('Bendahara');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export const RTCashModal: React.FC<RTCashModalProps> = ({
         setCategory(itemToEdit.category || 'Iuran Bulanan Warga');
         setAmount(itemToEdit.amount ? String(itemToEdit.amount) : '');
         setDate(itemToEdit.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
-        setRecordedBy(itemToEdit.recordedBy || 'Bendahara RT 01');
+        setRecordedBy(itemToEdit.recordedBy || 'Bendahara');
         setNotes(itemToEdit.notes || '');
       } else {
         setType('Pemasukan');
@@ -39,7 +39,7 @@ export const RTCashModal: React.FC<RTCashModalProps> = ({
         setCategory('Iuran Bulanan Warga');
         setAmount('');
         setDate(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
-        setRecordedBy('Bendahara RT 01');
+        setRecordedBy('Bendahara');
         setNotes('');
       }
     }
@@ -62,7 +62,7 @@ export const RTCashModal: React.FC<RTCashModalProps> = ({
       category: category.trim(),
       amount: numAmount,
       date: date.trim(),
-      recordedBy: recordedBy.trim() || 'Bendahara RT',
+      recordedBy: recordedBy.trim() || 'Bendahara',
       notes: notes.trim() || undefined,
     };
 
@@ -214,7 +214,7 @@ export const RTCashModal: React.FC<RTCashModalProps> = ({
             </label>
             <input
               type="text"
-              placeholder="Contoh: Bendahara RT 01"
+              placeholder="Contoh: Bendahara"
               value={recordedBy}
               onChange={(e) => setRecordedBy(e.target.value)}
               className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"

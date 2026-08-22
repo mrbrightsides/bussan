@@ -84,7 +84,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
       isOpen: true,
       title: 'Kosongkan Semua Lapak UMKM',
       message:
-        'Tindakan ini memerlukan persetujuan pengurus RT. Semua produk dan lapak jualan warga akan dihapus permanen dari server database.',
+        'Tindakan ini memerlukan persetujuan pengurus. Semua produk dan lapak jualan warga akan dihapus permanen dari server database.',
       confirmButtonText: 'Kosongkan Sekarang',
       isBulkAction: true,
       onConfirm: () => {
@@ -196,7 +196,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
               </div>
               <div>
                 <h2 className="text-base font-bold text-slate-900">
-                  Panduan Warga: Cara Membuka Lapak & Jualan di Portal RT
+                  Panduan Warga: Cara Membuka Lapak & Jualan di Portal Warga
                 </h2>
                 <p className="text-xs text-slate-600">
                   Semua warga Green Bussan Village dapat mempromosikan produk makanan, barang kebutuhan, maupun jasa secara gratis tanpa potongan.

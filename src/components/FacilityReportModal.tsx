@@ -129,7 +129,7 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
       description: description.trim(),
       location: location.trim() || 'Lingkungan Komplek Green Bussan',
       reporterName: reporterName.trim(),
-      reporterHouse: reporterHouse.trim() || 'Warga RT 01',
+      reporterHouse: reporterHouse.trim() || 'Warga Green Bussan',
       reporterPhone: reporterPhone.trim(),
       urgency,
       status,
@@ -164,7 +164,7 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
                 {reportToEdit ? 'Edit Laporan Fasilitas' : 'Lapor Fasilitas / Aspirasi Warga'}
               </h3>
               <p className="text-rose-100 text-xs">
-                Sampaikan kendala lingkungan agar cepat ditindaklanjuti pengurus RT
+                Sampaikan kendala lingkungan agar cepat ditindaklanjuti pengurus
               </p>
             </div>
           </div>
@@ -283,7 +283,7 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: Blok B3 No. 05"
+                  placeholder="Contoh: Blok B3"
                   value={reporterHouse}
                   onChange={(e) => setReporterHouse(e.target.value)}
                   className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:outline-none"
@@ -407,7 +407,7 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
 
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                Catatan / Respon Tindak Lanjut Pengurus RT
+                Catatan / Respon Tindak Lanjut Pengurus
               </label>
               <input
                 type="text"

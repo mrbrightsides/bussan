@@ -24,7 +24,7 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
   const [formData, setFormData] = useState<Partial<Participant>>({
     name: '',
     houseNo: '',
-    rt: 'RT 01',
+    rt: 'Green Bussan',
     ageGroup: 'Anak-anak',
     competitionId: defaultCompetitionId || (competitions[0]?.id || ''),
     phone: '',
@@ -38,7 +38,7 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
       setFormData({
         name: '',
         houseNo: '',
-        rt: 'RT 01',
+        rt: 'Green Bussan',
         ageGroup: 'Anak-anak',
         competitionId: defaultCompetitionId || (competitions[0]?.id || ''),
         phone: '',
@@ -55,7 +55,7 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
       id: participantToEdit?.id || `p-${Date.now()}`,
       name: formData.name.trim(),
       houseNo: formData.houseNo || '-',
-      rt: formData.rt || 'RT 01',
+      rt: formData.rt || 'Green Bussan',
       ageGroup: (formData.ageGroup as AgeCategory) || 'Anak-anak',
       competitionId: formData.competitionId || (competitions[0]?.id || ''),
       registeredAt: participantToEdit?.registeredAt || new Date().toISOString().slice(0, 10),
@@ -72,7 +72,7 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={participantToEdit ? 'Edit Data Peserta' : 'Form Pendaftaran Peserta Lomba'}
-      subtitle="Isi nama peserta, nomor rumah/RT, dan lomba yang diikuti"
+      subtitle="Isi nama peserta, nomor rumah, dan lomba yang diikuti"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-sm">
         <div>
@@ -109,7 +109,7 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
           <input
             type="text"
             required
-            placeholder="Contoh: Ahmad Faiz / Tim Anggrek RT 02"
+            placeholder="Contoh: Ahmad Faiz / Tim Blok A"
             value={formData.name || ''}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
@@ -129,16 +129,16 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Wilayah RT</label>
+            <label className="block font-semibold text-slate-700 mb-1">Blok Rumah</label>
             <select
-              value={formData.rt || 'RT 01'}
+              value={formData.rt || 'Green Bussan'}
               onChange={(e) => setFormData({ ...formData, rt: e.target.value })}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
             >
-              <option value="RT 01">RT 01</option>
-              <option value="RT 02">RT 02</option>
-              <option value="RT 03">RT 03</option>
-              <option value="RT 04">RT 04</option>
+              <option value="Blok A1">Blok A1</option>
+              <option value="Blok B1">Blok B1</option>
+              <option value="Blok C1">Blok C1</option>
+              <option value="Blok D1">Blok D1</option>
               <option value="Luar Komplek">Luar Komplek / Tamu</option>
             </select>
           </div>

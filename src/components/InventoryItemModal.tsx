@@ -23,7 +23,7 @@ interface InventoryItemModalProps {
 const CATEGORIES: InventoryCategory[] = [
   'Tenda & Terpal',
   'Kursi & Meja',
-  'Sound System & Pengeras Suara',
+  'Sound System, Kabel, & Lampu',
   'Alat Kebersihan & Mesin Rumput',
   'Peralatan Masak & Dapur Warga',
   'Perkakas & Pertukangan',
@@ -71,9 +71,9 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
       setAvailableQuantity(1);
       setUnit('Unit');
       setCondition('Baik');
-      setStorageLocation('Gudang Balai Warga RT 01');
-      setPicName('Pak Sulaiman (Ketua RT)');
-      setPicPhone('6281367613695');
+      setStorageLocation('Pos Security');
+      setPicName('Pak Tyo (Penanggung Jawab Lingkungan)');
+      setPicPhone('6285267083889');
       setImageUrl('');
       setDescription('');
       setTerms('Wajib dikembalikan dalam keadaan bersih & rapi.');
@@ -140,10 +140,10 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-lg leading-tight">
-                {itemToEdit ? 'Edit Barang Inventaris' : 'Tambah Barang Inventaris RT'}
+                {itemToEdit ? 'Edit Barang Inventaris' : 'Tambah Barang Inventaris'}
               </h3>
               <p className="text-emerald-100 text-xs">
-                Katalog sarana prasarana milik bersama RT 01
+                Katalog sarana prasarana milik bersama Warga Green Bussan Village
               </p>
             </div>
           </div>
@@ -259,7 +259,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
             <input
               type="text"
               required
-              placeholder="Contoh: Gudang Balai Warga RT 01 / Pos Satpam"
+              placeholder="Contoh: Pos Security"
               value={storageLocation}
               onChange={(e) => setStorageLocation(e.target.value)}
               className="w-full text-sm px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none"
@@ -275,7 +275,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="Contoh: Pak Sulaiman (Ketua RT)"
+                placeholder="Contoh: Pak Tyo"
                 value={picName}
                 onChange={(e) => setPicName(e.target.value)}
                 className="w-full text-sm px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none"
@@ -318,7 +318,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
             </label>
             <input
               type="text"
-              placeholder="Contoh: Wajib konfirmasi H-2 ke Pak RT, dikembalikan bersih & utuh"
+              placeholder="Contoh: Wajib konfirmasi H-2 ke pengurus, dikembalikan bersih & utuh"
               value={terms}
               onChange={(e) => setTerms(e.target.value)}
               className="w-full text-sm px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none"

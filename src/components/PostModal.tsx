@@ -13,7 +13,7 @@ interface PostModalProps {
 const CATEGORIES: PostCategory[] = [
   'Berita Warga',
   'Liputan 17an & Kegiatan',
-  'Pengumuman RT',
+  'Pengumuman',
   'Kerja Bakti',
   'Iuran & Kas',
   'Keamanan & Ronda',
@@ -213,7 +213,7 @@ export const PostModal: React.FC<PostModalProps> = ({
             <textarea
               required
               rows={4}
-              placeholder="Tuliskan cerita liputan kegiatan, pengalaman seru lomba 17an, kabar gembira warga, atau detail pengumuman RT..."
+              placeholder="Tuliskan cerita liputan kegiatan, pengalaman seru lomba 17an, kabar gembira warga, atau detail pengumuman..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none leading-relaxed shadow-sm"

@@ -54,7 +54,7 @@ interface EmergencyDirectoryViewProps {
 
 const CATEGORIES: (EmergencyCategory | 'Semua')[] = [
   'Semua',
-  'Pengurus RT/RW',
+  'Pengurus Kompleks',
   'Pemerintahan & Kelurahan',
   'Keamanan & Darurat',
   'Kesehatan & Medis',
@@ -109,7 +109,7 @@ export const EmergencyDirectoryView: React.FC<EmergencyDirectoryViewProps> = ({
 
   const getCategoryIcon = (category: EmergencyCategory) => {
     switch (category) {
-      case 'Pengurus RT/RW':
+      case 'Pengurus Kompleks':
         return <Users className="w-4 h-4 text-emerald-600" />;
       case 'Pemerintahan & Kelurahan':
         return <Building className="w-4 h-4 text-indigo-600" />;
@@ -131,7 +131,7 @@ export const EmergencyDirectoryView: React.FC<EmergencyDirectoryViewProps> = ({
 
   const getCategoryHeaderStyle = (category: EmergencyCategory) => {
     switch (category) {
-      case 'Pengurus RT/RW':
+      case 'Pengurus Kompleks':
         return 'bg-emerald-50 border-emerald-200 text-emerald-800';
       case 'Pemerintahan & Kelurahan':
         return 'bg-indigo-50 border-indigo-200 text-indigo-800';
@@ -213,7 +213,7 @@ export const EmergencyDirectoryView: React.FC<EmergencyDirectoryViewProps> = ({
           }`}
         >
           <Package className="w-4 h-4" />
-          <span>Peminjaman Inventaris RT</span>
+          <span>Peminjaman Inventaris Kompleks</span>
           <span
             className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
               activeSubTab === 'inventory'
@@ -297,7 +297,7 @@ export const EmergencyDirectoryView: React.FC<EmergencyDirectoryViewProps> = ({
                   <a
                     href={createWhatsAppLink(
                       '6281367613695',
-                      'Halo Pak RT Sulaiman, saya warga RT 01 Green Bussan Village ingin konsultasi...'
+                      'Halo Pak RT Sulaiman, saya warga Green Bussan Village ingin konsultasi...'
                     )}
                     target="_blank"
                     rel="noreferrer"

@@ -116,11 +116,11 @@ export const ParticipantsView: React.FC<ParticipantsViewProps> = ({
             onChange={(e) => setRtFilter(e.target.value)}
             className="w-full bg-transparent outline-none font-medium text-slate-700"
           >
-            <option value="All">Semua RT</option>
-            <option value="RT 01">RT 01</option>
-            <option value="RT 02">RT 02</option>
-            <option value="RT 03">RT 03</option>
-            <option value="RT 04">RT 04</option>
+            <option value="All">Semua Blok</option>
+            <option value="Blok A1">Blok A1</option>
+            <option value="Blok B1">Blok B1</option>
+            <option value="Blok C1">Blok C1</option>
+            <option value="Blok D1">Blok D1</option>
           </select>
         </div>
 
@@ -158,7 +158,7 @@ export const ParticipantsView: React.FC<ParticipantsViewProps> = ({
                 <tr>
                   <th className="py-3 px-4">Nama Peserta / Tim</th>
                   <th className="py-3 px-4">Cabang Lomba</th>
-                  <th className="py-3 px-4">Rumah & RT</th>
+                  <th className="py-3 px-4">No Rumah</th>
                   <th className="py-3 px-4">Kategori Umur</th>
                   <th className="py-3 px-4">No. Kontak / Catatan</th>
                   <th className="py-3 px-4 text-right">Aksi</th>

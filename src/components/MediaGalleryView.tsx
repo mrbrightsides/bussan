@@ -94,7 +94,7 @@ export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
       isOpen: true,
       title: 'Kosongkan Seluruh Galeri',
       message:
-        'Tindakan ini memerlukan persetujuan pengurus RT. Seluruh foto dan video di galeri akan dikosongkan secara permanen dari server.',
+        'Tindakan ini memerlukan persetujuan pengurus. Seluruh foto dan video di galeri akan dikosongkan secara permanen dari server.',
       confirmButtonText: 'Kosongkan Galeri',
       isBulkAction: true,
       onConfirm: () => {
@@ -202,7 +202,7 @@ export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
                   Panduan Mudah Mengisi & Mengganti Foto / Video Galeri
                 </h3>
                 <p className="text-xs text-slate-600">
-                  Warga atau pengurus RT dapat mengunggah momen kapan saja dengan 4 langkah praktis:
+                  Warga atau pengurus dapat mengunggah momen kapan saja dengan 4 langkah praktis:
                 </p>
               </div>
             </div>

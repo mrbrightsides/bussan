@@ -116,7 +116,7 @@ export const BorrowItemModal: React.FC<BorrowItemModalProps> = ({
 
     // Optional WhatsApp confirmation trigger to PIC
     if (item.picPhone) {
-      const waMsg = `*PENGAJUAN PINJAM INVENTARIS RT 01 GREEN BUSSAN*\n\n` +
+      const waMsg = `*PENGAJUAN PINJAM INVENTARIS GREEN BUSSAN*\n\n` +
         `📦 *Barang*: ${item.name}\n` +
         `🔢 *Jumlah*: ${quantity} ${item.unit}\n` +
         `👤 *Peminjam*: ${borrowerName} (${borrowerHouse})\n` +
@@ -153,7 +153,7 @@ export const BorrowItemModal: React.FC<BorrowItemModalProps> = ({
             <div>
               <h3 className="font-bold text-lg leading-tight">Form Peminjaman Inventaris</h3>
               <p className="text-emerald-100 text-xs">
-                Barang milik bersama RT 01 Green Bussan Village
+                Barang milik bersama Green Bussan Village
               </p>
             </div>
           </div>

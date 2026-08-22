@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Trash2, AlertTriangle, X, Lock, Eye, EyeOff } from 'lucide-react';
 
-export const ADMIN_RT_PIN = '2222'; // Default PIN Pengurus RT 22 (Rahasia Pengurus)
+export const ADMIN_RT_PIN = '2222'; // Default PIN Pengurus (Rahasia Pengurus)
 
 interface AdminConfirmationModalProps {
   isOpen: boolean;

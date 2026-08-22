@@ -14,7 +14,7 @@ const CATEGORIES: EventCategory[] = [
   'Pengajian & Keagamaan',
   'Olahraga & Senam',
   'Posyandu & Balita',
-  'Rapat Warga',
+  'Rapat Warga & Arisan',
   'Peringatan Nasional',
 ];
 
@@ -195,7 +195,7 @@ export const EventModal: React.FC<EventModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="Contoh: Lapangan Utama / Gazebo RT"
+                placeholder="Contoh: Lapangan Utama / Taman Kompleks"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="w-full text-xs px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none"

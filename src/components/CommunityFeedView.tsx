@@ -49,7 +49,7 @@ const CATEGORIES: { label: string; value: PostCategory | 'Semua' }[] = [
   { label: 'Semua Kabar & Berita', value: 'Semua' },
   { label: '📰 Berita Warga', value: 'Berita Warga' },
   { label: '🏆 Liputan 17an & Kegiatan', value: 'Liputan 17an & Kegiatan' },
-  { label: '📢 Pengumuman RT', value: 'Pengumuman RT' },
+  { label: '📢 Pengumuman', value: 'Pengumuman' },
   { label: '🌿 Kerja Bakti', value: 'Kerja Bakti' },
   { label: '💰 Iuran & Kas', value: 'Iuran & Kas' },
   { label: '🛡️ Keamanan & Ronda', value: 'Keamanan & Ronda' },
@@ -92,7 +92,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
     onConfirm: () => {},
   });
 
-  // Financial Kas RT calculation
+  // Financial Kas calculation
   const totalIncome = rtCash.filter((c) => c.type === 'Pemasukan').reduce((s, c) => s + c.amount, 0);
   const totalExpense = rtCash.filter((c) => c.type === 'Pengeluaran').reduce((s, c) => s + c.amount, 0);
   const activeBalance = INITIAL_RT_CASH_BALANCE + totalIncome - totalExpense;
@@ -125,7 +125,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
       isOpen: true,
       title: 'Kosongkan Semua Kabar Warga',
       message:
-        'Tindakan ini memerlukan persetujuan pengurus RT. Seluruh postingan, pengumuman, dan artikel kabar warga akan dihapus permanen dari server database.',
+        'Tindakan ini memerlukan persetujuan pengurus. Seluruh postingan, pengumuman, dan artikel kabar warga akan dihapus permanen dari server database.',
       confirmButtonText: 'Kosongkan Sekarang',
       isBulkAction: true,
       onConfirm: () => {
@@ -154,7 +154,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
         return 'bg-sky-100 text-sky-800 border-sky-200';
       case 'Liputan 17an & Kegiatan':
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'Pengumuman RT':
+      case 'Pengumuman':
         return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       case 'Kerja Bakti':
         return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -302,7 +302,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
               <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold inline-flex items-center justify-center">1</span>
               <h4 className="text-xs font-bold text-slate-800">Tentukan Judul & Kategori</h4>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                Pilih kategori seperti <strong>Liputan 17an & Kegiatan</strong>, <strong>Berita Warga</strong>, atau <strong>Pengumuman RT</strong>.
+                Pilih kategori seperti <strong>Liputan 17an & Kegiatan</strong>, <strong>Berita Warga</strong>, atau <strong>Pengumuman</strong>.
               </p>
             </div>
 
@@ -326,7 +326,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
               <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold inline-flex items-center justify-center">4</span>
               <h4 className="text-xs font-bold text-slate-800">Sebar ke WhatsApp</h4>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                Klik tombol "Bagikan WA" untuk langsung mengirim format berita rapi ke grup chat warga RT.
+                Klik tombol "Bagikan WA" untuk langsung mengirim format berita rapi ke grup chat warga.
               </p>
             </div>
           </div>
@@ -410,7 +410,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {searchQuery
                     ? 'Coba ganti kata kunci pencarian atau pilih kategori lain.'
-                    : 'Tab ini telah dikosongkan agar warga dan panitia dapat menuliskan liputan kegiatan (seperti hasil 17an kemarin), kabar gembira, atau rilis pengumuman RT versi masing-masing.'}
+                    : 'Tab ini telah dikosongkan agar warga dan panitia dapat menuliskan liputan kegiatan (seperti hasil 17an kemarin), kabar gembira, atau rilis pengumuman versi masing-masing.'}
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -574,7 +574,7 @@ export const CommunityFeedView: React.FC<CommunityFeedViewProps> = ({
           )}
         </div>
 
-        {/* Right Column: Widgets (Events, Emergency, Kas RT) */}
+        {/* Right Column: Widgets (Events, Emergency, Kas) */}
         <div className="space-y-5">
           {/* Widget 1: Upcoming Agenda */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
