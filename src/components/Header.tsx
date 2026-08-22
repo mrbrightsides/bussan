@@ -19,9 +19,19 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Brand & Complex Identity */}
           <div className="flex items-center gap-3">
-            {/* Community Emplem */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-0.5 shadow-md flex items-center justify-center text-white shrink-0">
-              <Building2 className="w-5 h-5 text-white" />
+            {/* Community Logo */}
+            <div className="w-11 h-11 rounded-2xl bg-white/10 p-1 shadow-md flex items-center justify-center text-white shrink-0 border border-white/20 overflow-hidden backdrop-blur-xs">
+              <img
+                src="https://i.imgur.com/3s9ezf1.png"
+                alt="Logo Green Bussan Village"
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  e.currentTarget.parentElement?.classList.add('fallback-icon');
+                }}
+              />
+              <Building2 className="w-5 h-5 text-white hidden fallback-icon:block" />
             </div>
 
             <div>

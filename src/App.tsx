@@ -614,7 +614,15 @@ export default function App() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 text-center space-y-1.5 mb-14 md:mb-0 print:hidden">
+      <footer className="bg-slate-900 text-slate-400 text-xs py-7 border-t border-slate-800 text-center space-y-2 mb-14 md:mb-0 print:hidden">
+        <div className="flex justify-center">
+          <img
+            src="https://i.imgur.com/3s9ezf1.png"
+            alt="Logo Green Bussan Village"
+            className="w-10 h-10 object-contain opacity-90 hover:opacity-100 transition-opacity"
+            referrerPolicy="no-referrer"
+          />
+        </div>
         <p className="font-semibold text-slate-300">
           Portal Informasi & Komunikasi Warga Green Bussan Village
         </p>
