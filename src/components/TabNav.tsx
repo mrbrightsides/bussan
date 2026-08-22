@@ -41,7 +41,7 @@ export const TabNav: React.FC<TabNavProps> = ({ activeTab, onChangeTab, counts }
     },
     {
       id: 'gallery',
-      label: 'Galeri Foto & Video',
+      label: 'Galeri',
       icon: ImageIcon,
       badge: counts.media,
     },
