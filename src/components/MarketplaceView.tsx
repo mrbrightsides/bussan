@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { MarketplaceItem, MarketplaceCategory } from '../types';
 import { MarketplaceModal } from './MarketplaceModal';
+import { MarketplaceDetailModal } from './MarketplaceDetailModal';
 import { AdminConfirmationModal } from './AdminConfirmationModal';
 import { createWhatsAppLink } from '../utils/mediaUtils';
 
@@ -51,6 +52,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
   const [showGuide, setShowGuide] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<MarketplaceItem | null>(null);
+  const [selectedItemForDetail, setSelectedItemForDetail] = useState<MarketplaceItem | null>(null);
 
   // Security confirmation state
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -391,7 +393,8 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             return (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between group"
+                onClick={() => setSelectedItemForDetail(item)}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between group cursor-pointer hover:border-amber-400/80"
               >
                 <div>
                   {/* Image Container */}
@@ -423,13 +426,21 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                     <div className="absolute bottom-3 right-3 bg-amber-600 text-white text-xs font-black px-3 py-1.5 rounded-xl shadow-lg">
                       {item.price}
                     </div>
+
+                    {/* Hover Hint Overlay */}
+                    <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                      <span className="bg-white/90 backdrop-blur-sm text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                        <Store className="w-3.5 h-3.5 text-amber-600" />
+                        Buka & Baca Lengkap
+                      </span>
+                    </div>
                   </div>
 
                   {/* Body Info */}
                   <div className="p-5 space-y-3">
                     <div>
-                      <h3 className="font-bold text-base text-slate-900 leading-snug group-hover:text-amber-700 transition-colors">
-                        {item.title}
+                      <h3 className="font-bold text-base text-slate-900 leading-snug group-hover:text-amber-700 transition-colors flex items-start justify-between gap-2">
+                        <span>{item.title}</span>
                       </h3>
                       <div className="flex items-center justify-between text-xs text-slate-500 mt-1.5">
                         <span className="font-semibold text-slate-700">{item.sellerName}</span>
@@ -443,6 +454,10 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                     <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
                       {item.description}
                     </p>
+
+                    <div className="text-[11px] text-amber-700 font-semibold flex items-center gap-1 pt-1">
+                      <span>Lihat detail & deskripsi lengkap →</span>
+                    </div>
                   </div>
                 </div>
 
@@ -453,6 +468,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                       href={createWhatsAppLink(item.whatsapp, waOrderMsg)}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all hover:shadow"
                     >
                       <MessageCircle className="w-4 h-4" />
@@ -460,18 +476,22 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                     </a>
 
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setItemToEdit(item);
                         setIsModalOpen(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors text-xs font-medium"
+                      className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors text-xs font-medium cursor-pointer"
                       title="Edit Lapak"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleRequestDelete(item)}
-                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRequestDelete(item);
+                      }}
+                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium cursor-pointer"
                       title="Hapus Lapak"
                     >
                       Hapus
@@ -483,6 +503,20 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
           })}
         </div>
       )}
+
+      {/* Modal Detail Lapak */}
+      <MarketplaceDetailModal
+        item={selectedItemForDetail}
+        isOpen={Boolean(selectedItemForDetail)}
+        onClose={() => setSelectedItemForDetail(null)}
+        onEdit={(item) => {
+          setItemToEdit(item);
+          setIsModalOpen(true);
+        }}
+        onDelete={(item) => {
+          handleRequestDelete(item);
+        }}
+      />
 
       <MarketplaceModal
         isOpen={isModalOpen}
