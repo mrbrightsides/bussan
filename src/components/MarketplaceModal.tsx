@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, ShoppingBag, Save, Image as ImageIcon, Sparkles, CheckCircle2 } from 'lucide-react';
 import { MarketplaceItem, MarketplaceCategory } from '../types';
 import { compressImageFile } from '../utils/mediaUtils';
+import { SecurityCaptcha } from './SecurityCaptcha';
 
 interface MarketplaceModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionInfo, setCompressionInfo] = useState<string | null>(null);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -93,6 +95,11 @@ export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
     e.preventDefault();
     if (!title.trim() || !sellerName.trim() || !whatsapp.trim()) {
       alert('Mohon lengkapi nama produk, nama penjual, dan nomor WhatsApp.');
+      return;
+    }
+
+    if (!isCaptchaVerified && !itemToEdit) {
+      alert('Mohon selesaikan verifikasi anti-spam / hitungan captcha terlebih dahulu.');
       return;
     }
 
@@ -304,6 +311,14 @@ export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
             />
           </div>
 
+          {/* Anti-Spam Security Layer */}
+          {!itemToEdit && (
+            <SecurityCaptcha
+              colorScheme="amber"
+              onVerify={setIsCaptchaVerified}
+            />
+          )}
+
           <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
             <button
               type="button"
@@ -314,8 +329,8 @@ export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isCompressing}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+              disabled={isCompressing || (!isCaptchaVerified && !itemToEdit)}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
               Tayangkan di Lapak Warga

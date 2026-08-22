@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Participant, Competition, AgeCategory } from '../types';
+import { SecurityCaptcha } from './SecurityCaptcha';
 
 interface ParticipantModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
     phone: '',
     notes: '',
   });
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   useEffect(() => {
     if (participantToEdit) {
@@ -50,6 +52,11 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) return;
+
+    if (!isCaptchaVerified && !participantToEdit) {
+      alert('Mohon selesaikan verifikasi anti-spam / hitungan captcha terlebih dahulu.');
+      return;
+    }
 
     const part: Participant = {
       id: participantToEdit?.id || `p-${Date.now()}`,
@@ -183,6 +190,14 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
           />
         </div>
 
+        {/* Anti-Spam Security Layer */}
+        {!participantToEdit && (
+          <SecurityCaptcha
+            colorScheme="rose"
+            onVerify={setIsCaptchaVerified}
+          />
+        )}
+
         <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
           <button
             type="button"
@@ -193,7 +208,8 @@ export const ParticipantModal: React.FC<ParticipantModalProps> = ({
           </button>
           <button
             type="submit"
-            className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-sm transition-colors"
+            disabled={!isCaptchaVerified && !participantToEdit}
+            className="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
           >
             Simpan Peserta
           </button>

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { RTInventoryItem, InventoryBorrowRecord } from '../types';
 import { createWhatsAppLink } from '../utils/mediaUtils';
+import { SecurityCaptcha } from './SecurityCaptcha';
 
 interface BorrowItemModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const BorrowItemModal: React.FC<BorrowItemModalProps> = ({
   const [borrowDate, setBorrowDate] = useState('');
   const [returnEstimate, setReturnEstimate] = useState('');
   const [purpose, setPurpose] = useState('');
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -92,6 +94,11 @@ export const BorrowItemModal: React.FC<BorrowItemModalProps> = ({
     e.preventDefault();
     if (!borrowerName.trim() || !borrowerHouse.trim() || !purpose.trim()) {
       alert('Mohon lengkapi nama peminjam, blok rumah, dan keperluan peminjaman.');
+      return;
+    }
+
+    if (!isCaptchaVerified) {
+      alert('Mohon selesaikan verifikasi anti-spam / hitungan captcha terlebih dahulu.');
       return;
     }
 
@@ -321,6 +328,12 @@ export const BorrowItemModal: React.FC<BorrowItemModalProps> = ({
             )}
           </div>
 
+          {/* Anti-Spam Security Layer */}
+          <SecurityCaptcha
+            colorScheme="teal"
+            onVerify={setIsCaptchaVerified}
+          />
+
           {/* Buttons */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
@@ -332,7 +345,8 @@ export const BorrowItemModal: React.FC<BorrowItemModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer"
+              disabled={!isCaptchaVerified}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-md shadow-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               Ajukan Peminjaman

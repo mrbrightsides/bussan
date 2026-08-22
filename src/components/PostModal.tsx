@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Image as ImageIcon, Sparkles, Pin, CheckCircle2, Upload } from 'lucide-react';
 import { CommunityPost, PostCategory } from '../types';
 import { compressImageFile } from '../utils/mediaUtils';
+import { SecurityCaptcha } from './SecurityCaptcha';
 
 interface PostModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const PostModal: React.FC<PostModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionInfo, setCompressionInfo] = useState<string | null>(null);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,6 +100,11 @@ export const PostModal: React.FC<PostModalProps> = ({
 
     if (!title.trim() || !content.trim()) {
       alert('Mohon isi judul dan isi berita / pengumuman.');
+      return;
+    }
+
+    if (!isCaptchaVerified && !postToEdit) {
+      alert('Mohon selesaikan verifikasi anti-spam / hitungan captcha terlebih dahulu.');
       return;
     }
 
@@ -326,6 +333,14 @@ export const PostModal: React.FC<PostModalProps> = ({
             />
           </div>
 
+          {/* Anti-Spam Security Layer */}
+          {!postToEdit && (
+            <SecurityCaptcha
+              colorScheme="emerald"
+              onVerify={setIsCaptchaVerified}
+            />
+          )}
+
           {/* Actions */}
           <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
             <button
@@ -337,8 +352,8 @@ export const PostModal: React.FC<PostModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isCompressing}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              disabled={isCompressing || (!isCaptchaVerified && !postToEdit)}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Send className="w-4 h-4" />
               {postToEdit ? 'Simpan Perubahan' : 'Terbitkan Berita'}

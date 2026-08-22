@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { FacilityReport, ReportCategory, ReportStatus } from '../types';
 import { compressImage } from '../utils/mediaUtils';
+import { SecurityCaptcha } from './SecurityCaptcha';
 
 interface FacilityReportModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
   const [adminResponse, setAdminResponse] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   useEffect(() => {
     if (reportToEdit) {
@@ -101,6 +103,11 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
     e.preventDefault();
     if (!title.trim() || !description.trim() || !reporterName.trim()) {
       alert('Mohon lengkapi judul laporan, rincian masalah, dan nama pelapor.');
+      return;
+    }
+
+    if (!isCaptchaVerified && !reportToEdit) {
+      alert('Mohon selesaikan verifikasi anti-spam / hitungan captcha terlebih dahulu.');
       return;
     }
 
@@ -419,6 +426,14 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
             </div>
           </div>
 
+          {/* Anti-Spam Security Layer */}
+          {!reportToEdit && (
+            <SecurityCaptcha
+              colorScheme="rose"
+              onVerify={setIsCaptchaVerified}
+            />
+          )}
+
           {/* Footer Buttons */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
@@ -430,8 +445,8 @@ export const FacilityReportModal: React.FC<FacilityReportModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isCompressing}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs shadow-md shadow-rose-200 transition-all flex items-center gap-1.5 cursor-pointer"
+              disabled={isCompressing || (!isCaptchaVerified && !reportToEdit)}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-md shadow-rose-200 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
               {reportToEdit ? 'Simpan Perubahan' : 'Kirim Laporan Warga'}

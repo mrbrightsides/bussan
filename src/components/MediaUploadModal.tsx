@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Film, Image as ImageIcon, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { MediaItem, MediaType } from '../types';
 import { compressImageFile, extractYouTubeEmbedUrl } from '../utils/mediaUtils';
+import { SecurityCaptcha } from './SecurityCaptcha';
 
 interface MediaUploadModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [compressionInfo, setCompressionInfo] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   // Video state
   const [videoUrlInput, setVideoUrlInput] = useState('');
@@ -109,6 +111,11 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
 
     if (!title.trim()) {
       alert('Mohon masukkan judul dokumentasi.');
+      return;
+    }
+
+    if (!isCaptchaVerified) {
+      alert('Mohon selesaikan verifikasi anti-spam / hitungan captcha terlebih dahulu.');
       return;
     }
 
@@ -405,6 +412,12 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
             </div>
           </div>
 
+          {/* Anti-Spam Security Layer */}
+          <SecurityCaptcha
+            colorScheme="emerald"
+            onVerify={setIsCaptchaVerified}
+          />
+
           {/* Action Buttons */}
           <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
             <button
@@ -416,8 +429,8 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isCompressing}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
+              disabled={isCompressing || !isCaptchaVerified}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Upload className="w-4 h-4" />
               Simpan & Tayangkan di Galeri
