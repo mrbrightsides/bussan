@@ -30,6 +30,7 @@ import { AdminConfirmationModal } from './AdminConfirmationModal';
 interface MediaGalleryViewProps {
   mediaList: MediaItem[];
   onSaveMedia: (item: MediaItem) => void;
+  onSaveMultipleMedia?: (items: MediaItem[]) => void;
   onDeleteMedia: (id: string) => void;
   onLikeMedia: (id: string) => void;
   onResetDemoMedia?: () => void;
@@ -39,6 +40,7 @@ interface MediaGalleryViewProps {
 export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
   mediaList,
   onSaveMedia,
+  onSaveMultipleMedia,
   onDeleteMedia,
   onLikeMedia,
   onResetDemoMedia,
@@ -539,6 +541,7 @@ export const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onSave={onSaveMedia}
+        onSaveMultiple={onSaveMultipleMedia}
         existingAlbums={existingAlbums}
       />
 

@@ -8,6 +8,7 @@ interface MediaUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: MediaItem) => void;
+  onSaveMultiple?: (items: MediaItem[]) => void;
   existingAlbums: string[];
 }
 
@@ -15,6 +16,7 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onSaveMultiple,
   existingAlbums,
 }) => {
   const [mediaType, setMediaType] = useState<MediaType>('photo');
@@ -28,6 +30,7 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
 
   // Photo state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [multiPreviews, setMultiPreviews] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [compressionInfo, setCompressionInfo] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -57,6 +60,7 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
       );
       setTagInput('');
       setImagePreview(null);
+      setMultiPreviews([]);
       setImageUrlInput('');
       setCompressionInfo(null);
       setIsCompressing(false);
@@ -71,21 +75,35 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
   if (!isOpen) return null;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setIsCompressing(true);
     setCompressionInfo(null);
 
-    const originalSizeKb = Math.round(file.size / 1024);
+    const compressedList: string[] = [];
+    let totalOriginalKb = 0;
+    let totalCompressedKb = 0;
 
     try {
-      const compressedDataUrl = await compressImageFile(file, 960, 960, 0.72);
-      setImagePreview(compressedDataUrl);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        totalOriginalKb += Math.round(file.size / 1024);
+        const compressedDataUrl = await compressImageFile(file, 960, 960, 0.72);
+        compressedList.push(compressedDataUrl);
+        totalCompressedKb += Math.round((compressedDataUrl.length * 3) / 4 / 1024);
+      }
 
-      // Estimate compressed size from base64 string
-      const compressedSizeKb = Math.round((compressedDataUrl.length * 3) / 4 / 1024);
-      setCompressionInfo(`Foto siap: ${originalSizeKb} KB ➔ ${compressedSizeKb} KB (Hemat kuota & sinkron kilat)`);
+      setMultiPreviews(compressedList);
+      if (compressedList.length > 0) {
+        setImagePreview(compressedList[0]);
+      }
+
+      if (compressedList.length > 1) {
+        setCompressionInfo(`Berhasil memproses ${compressedList.length} foto: ${totalOriginalKb} KB ➔ ${totalCompressedKb} KB (Bulk Upload Siap)`);
+      } else {
+        setCompressionInfo(`Foto siap: ${totalOriginalKb} KB ➔ ${totalCompressedKb} KB (Hemat kuota & sinkron kilat)`);
+      }
     } catch (err) {
       console.error(err);
       alert('Gagal mengompres gambar. Silakan coba gambar lain.');
@@ -109,7 +127,9 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
       return;
     }
 
-    if (!title.trim()) {
+    const isBulk = multiPreviews.length > 1 && onSaveMultiple;
+
+    if (!isBulk && !title.trim()) {
       alert('Mohon masukkan judul dokumentasi.');
       return;
     }
@@ -119,42 +139,80 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
       return;
     }
 
-    let finalUrl = '';
-    if (mediaType === 'photo') {
-      finalUrl = imagePreview || imageUrlInput.trim();
-      if (!finalUrl) {
-        alert('Mohon pilih file foto atau masukkan tautan URL gambar.');
-        return;
-      }
-    } else {
-      if (!videoPreviewEmbed) {
-        alert('Mohon masukkan tautan video YouTube / embed yang valid.');
-        return;
-      }
-      finalUrl = videoPreviewEmbed;
-    }
-
     const tags = tagInput
       .split(',')
       .map((t) => t.trim().replace(/^#/, ''))
       .filter(Boolean);
 
-    const newItem: MediaItem = {
-      id: `media-${Date.now()}`,
-      title: title.trim(),
-      description: description.trim() || undefined,
-      albumName: finalAlbum,
-      type: mediaType,
-      url: finalUrl,
-      thumbnailUrl: mediaType === 'video' ? 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80' : undefined,
-      date: date.trim() || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-      uploadedBy: uploadedBy.trim() || 'Warga Green Bussan',
-      likes: 0,
-      tags: tags.length > 0 ? tags : undefined,
-    };
+    const parsedDate = date.trim() || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const parsedUploadedBy = uploadedBy.trim() || 'Warga Green Bussan';
 
-    onSave(newItem);
-    onClose();
+    if (mediaType === 'photo') {
+      if (isBulk) {
+        // Bulk upload multiple photos
+        const baseTitle = title.trim() || finalAlbum;
+        const newItems: MediaItem[] = multiPreviews.map((previewUrl, index) => ({
+          id: `media-${Date.now()}-${index}`,
+          title: `${baseTitle} (${index + 1})`,
+          description: description.trim() || undefined,
+          albumName: finalAlbum,
+          type: 'photo',
+          url: previewUrl,
+          date: parsedDate,
+          uploadedBy: parsedUploadedBy,
+          likes: 0,
+          tags: tags.length > 0 ? tags : undefined,
+        }));
+
+        onSaveMultiple(newItems);
+        onClose();
+        return;
+      }
+
+      const finalUrl = imagePreview || imageUrlInput.trim();
+      if (!finalUrl) {
+        alert('Mohon pilih file foto atau masukkan tautan URL gambar.');
+        return;
+      }
+
+      const newItem: MediaItem = {
+        id: `media-${Date.now()}`,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        albumName: finalAlbum,
+        type: 'photo',
+        url: finalUrl,
+        date: parsedDate,
+        uploadedBy: parsedUploadedBy,
+        likes: 0,
+        tags: tags.length > 0 ? tags : undefined,
+      };
+
+      onSave(newItem);
+      onClose();
+    } else {
+      if (!videoPreviewEmbed) {
+        alert('Mohon masukkan tautan video YouTube / embed yang valid.');
+        return;
+      }
+
+      const newItem: MediaItem = {
+        id: `media-${Date.now()}`,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        albumName: finalAlbum,
+        type: 'video',
+        url: videoPreviewEmbed,
+        thumbnailUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80',
+        date: parsedDate,
+        uploadedBy: parsedUploadedBy,
+        likes: 0,
+        tags: tags.length > 0 ? tags : undefined,
+      };
+
+      onSave(newItem);
+      onClose();
+    }
   };
 
   return (
@@ -228,10 +286,28 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                {imagePreview ? (
+                {multiPreviews.length > 0 ? (
+                  <div className="space-y-3 w-full">
+                    <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto p-1">
+                      {multiPreviews.map((url, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-emerald-300 shadow-xs">
+                          <img src={url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                          <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded font-bold">
+                            #{idx + 1}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-emerald-700 font-bold bg-emerald-100 px-3 py-1.5 rounded-full">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {multiPreviews.length} Foto Terpilih & Siap Diunggah Sekaligus (Bulk Upload)
+                    </div>
+                  </div>
+                ) : imagePreview ? (
                   <div className="space-y-2 w-full flex flex-col items-center">
                     <img
                       src={imagePreview}
@@ -250,10 +326,10 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
-                        {isCompressing ? 'Mengompres gambar...' : 'Klik untuk pilih foto'}
+                        {isCompressing ? 'Mengompres gambar...' : 'Klik untuk pilih BANYAK foto sekaligus'}
                       </p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Mendukung JPG, PNG, WEBP dari kamera HP & laptop
+                        Tekan Shift/Ctrl untuk memilih banyak foto dari galeri HP & laptop
                       </p>
                     </div>
                   </>
@@ -320,16 +396,21 @@ export const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
           {/* Title */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              Judul Dokumentasi <span className="text-red-500">*</span>
+              Judul Dokumentasi {multiPreviews.length > 1 ? <span className="text-slate-400 font-normal">(Opsional untuk bulk upload)</span> : <span className="text-red-500">*</span>}
             </label>
             <input
               type="text"
-              required
-              placeholder="Contoh: Gotong Royong Saluran Air Blok B & C"
+              required={multiPreviews.length <= 1 && mediaType === 'video'}
+              placeholder={multiPreviews.length > 1 ? "Kosongkan untuk pakai nama album + nomor (1, 2...)" : "Contoh: Gotong Royong Saluran Air Blok B & C"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-sm px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
+            {multiPreviews.length > 1 && (
+              <p className="text-[11px] text-emerald-700 mt-1">
+                💡 Untuk unggah banyak foto, judul akan otomatis bernomor (cth: Nama Album (1), (2)...). Jika dikosongkan, akan memakai nama album.
+              </p>
+            )}
           </div>
 
           {/* Album Selector */}

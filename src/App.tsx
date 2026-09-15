@@ -140,6 +140,13 @@ export default function App() {
     });
   };
 
+  const handleSaveMultipleMedia = (items: MediaItem[]) => {
+    updateAndSaveState((prev) => {
+      const list = prev.mediaGallery || [];
+      return { ...prev, mediaGallery: [...items, ...list] };
+    });
+  };
+
   const handleDeleteMedia = (id: string) => {
     updateAndSaveState((prev) => ({
       ...prev,
@@ -505,6 +512,7 @@ export default function App() {
             <MediaGalleryView
               mediaList={appState.mediaGallery || []}
               onSaveMedia={handleSaveMedia}
+              onSaveMultipleMedia={handleSaveMultipleMedia}
               onDeleteMedia={handleDeleteMedia}
               onLikeMedia={handleLikeMedia}
               onClearAllMedia={handleClearAllMedia}
