@@ -1815,6 +1815,18 @@ _Pengurus Green Bussan Village_`,
 
           {/* Matrix Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="p-3 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 font-semibold text-slate-700">
+                <span>Keterangan Status Iuran:</span>
+                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-mono font-bold text-[10px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> 100k = Lunas
+                </span>
+                <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-0.5 rounded-md font-mono font-bold text-[10px] border border-rose-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span> - = Belum Bayar
+                </span>
+              </div>
+              <span className="text-slate-500 text-[11px]">Total 43 Rumah Terdaftar</span>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -1884,7 +1896,9 @@ _Pengurus Green Bussan Village_`,
                                 100k
                               </span>
                             ) : (
-                              <span className="inline-block text-slate-300 font-bold">-</span>
+                              <span className="inline-block bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded border border-rose-200 font-mono font-bold text-[10px]" title="Belum Bayar">
+                                -
+                              </span>
                             )}
                           </td>
                         );
