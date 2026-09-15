@@ -45,18 +45,25 @@ export function subscribeToAppState(
           const inventoryItems = Array.isArray(data.inventoryItems) ? data.inventoryItems : [];
           const marketplace = Array.isArray(data.marketplace) ? data.marketplace : [];
 
-          // Check if rtCash needs migration/syncing to the official RT 22 transaction records
+          // Check if rtCash needs migration/syncing to the official RT 22 transaction records (Periode 15 Agu - 14 Sep 2026)
           const needsRTCashSync =
             !data.rtCashVersion ||
-            data.rtCashVersion < 4 ||
+            data.rtCashVersion < 5 ||
             !Array.isArray(data.rtCash) ||
             data.rtCash.length === 0 ||
-            data.rtCash.some((item: any) => item.amount === 5400000);
+            !data.rtCash.some((item: any) => item.id === 'cash-16');
+
+          // Check if monthly fees need syncing to include August 2026 data
+          const needsMonthlyFeesSync =
+            !data.monthlyFeesVersion ||
+            data.monthlyFeesVersion < 3 ||
+            !Array.isArray(data.monthlyFees) ||
+            !data.monthlyFees.some((h: any) => h.payments?.aug);
 
           const rtCash = needsRTCashSync ? initialAppData.rtCash || [] : data.rtCash;
-          const monthlyFees = Array.isArray(data.monthlyFees)
-            ? data.monthlyFees
-            : initialAppData.monthlyFees || [];
+          const monthlyFees = needsMonthlyFeesSync
+            ? initialAppData.monthlyFees || []
+            : data.monthlyFees;
 
           const loadedState: AppState = {
             posts,
@@ -75,9 +82,10 @@ export function subscribeToAppState(
             brackets: brackets,
           };
 
-          // One-time schema writeback if fields are missing
+          // One-time schema writeback if fields are missing or data updated
           if (
             needsRTCashSync ||
+            needsMonthlyFeesSync ||
             !data.cleanPortalDataVersion ||
             !Array.isArray(data.mediaGallery) ||
             !Array.isArray(data.posts) ||
@@ -110,8 +118,9 @@ export async function saveAppStateToFirestore(state: AppState) {
     const cleanState = cleanForFirestore(state);
     await setDoc(STATE_DOC_REF, {
       ...cleanState,
-      rtCashVersion: 4,
-      cleanPortalDataVersion: 4,
+      rtCashVersion: 5,
+      monthlyFeesVersion: 3,
+      cleanPortalDataVersion: 5,
       updatedAt: new Date().toISOString(),
     });
     console.log('✅ State successfully synced to Firestore!');

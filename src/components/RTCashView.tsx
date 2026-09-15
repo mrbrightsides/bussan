@@ -31,6 +31,7 @@ import {
   UserCheck,
   Paintbrush,
   RotateCcw,
+  HeartHandshake,
 } from 'lucide-react';
 import { RTCashItem, MonthlyFeeRecord } from '../types';
 import { RTCashModal } from './RTCashModal';
@@ -40,8 +41,13 @@ import {
   INITIAL_RT_CASH_BALANCE,
   INITIAL_RT_CASH_DATE,
   INITIAL_RT_CASH_TITLE,
+  PERIOD_2_START_BALANCE,
+  PERIOD_2_START_DATE,
+  PERIOD_2_END_DATE,
 } from '../data/initialData';
 import { formatRupiah } from '../utils/mediaUtils';
+
+export type RTCashPeriod = 'period2' | 'period1' | 'all';
 
 interface RTCashViewProps {
   rtCash: RTCashItem[];
@@ -59,6 +65,7 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
   onResetOfficialRTCash,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'narrative' | 'transactions' | 'matrix'>('narrative');
+  const [selectedPeriod, setSelectedPeriod] = useState<RTCashPeriod>('period2');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Pemasukan' | 'Pengeluaran'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [blockFilter, setBlockFilter] = useState<string>('all');
@@ -102,7 +109,7 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
       isOpen: true,
       title: 'Sinkronisasi Data Kas Resmi',
       message:
-        'Apakah Anda ingin menyinkronkan dan memuat ulang data resmi Buku Kas periode 14 Juli - 14 Agustus 2026 (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)?',
+        'Apakah Anda ingin menyinkronkan dan memuat ulang data resmi Buku Kas & Matriks Iuran Warga s/d Periode 15 Agustus - 14 September 2026 (Saldo Kas Terkini: Rp 6.902.500)?',
       confirmButtonText: 'Sinkronkan Sekarang',
       isBulkAction: false,
       onConfirm: () => {
@@ -111,36 +118,109 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     });
   };
 
-  // Calculations for Kas Transaksi
-  const initialBalance = INITIAL_RT_CASH_BALANCE; // Rp 9.949.000
+  // Helper to distinguish Period 2 (15 Aug - 14 Sep 2026) vs Period 1 (14 Jul - 14 Aug 2026)
+  const isPeriod2Item = (item: RTCashItem) => {
+    if (
+      item.id.startsWith('cash-9') ||
+      item.id.startsWith('cash-10') ||
+      item.id.startsWith('cash-11') ||
+      item.id.startsWith('cash-12') ||
+      item.id.startsWith('cash-13') ||
+      item.id.startsWith('cash-14') ||
+      item.id.startsWith('cash-15') ||
+      item.id.startsWith('cash-16')
+    ) {
+      return true;
+    }
+    if (item.date.includes('September') || item.date.includes('Sep')) return true;
+    if (item.date.includes('Agustus') || item.date.includes('Aug')) {
+      const match = item.date.match(/(\d+)/);
+      if (match && parseInt(match[1], 10) >= 15) return true;
+    }
+    return false;
+  };
 
-  const totalIncome = rtCash
+  // Cash items belonging to the selected period
+  const periodItems = rtCash.filter((item) => {
+    if (selectedPeriod === 'all') return true;
+    if (selectedPeriod === 'period2') return isPeriod2Item(item);
+    return !isPeriod2Item(item);
+  });
+
+  const periodInitialBalance =
+    selectedPeriod === 'period2' ? PERIOD_2_START_BALANCE : INITIAL_RT_CASH_BALANCE;
+
+  const periodInitialDate =
+    selectedPeriod === 'period2' ? PERIOD_2_START_DATE : INITIAL_RT_CASH_DATE;
+
+  const periodEndDate =
+    selectedPeriod === 'period1' ? '14 Agustus 2026' : PERIOD_2_END_DATE;
+
+  const periodLabel =
+    selectedPeriod === 'period2'
+      ? '15 Agustus 2026 – 14 September 2026'
+      : selectedPeriod === 'period1'
+      ? '14 Juli 2026 – 14 Agustus 2026'
+      : 'Akumulatif (14 Juli 2026 – 14 September 2026)';
+
+  const totalIncome = periodItems
     .filter((c) => c.type === 'Pemasukan')
     .reduce((sum, c) => sum + c.amount, 0);
 
-  const totalExpense = rtCash
+  const totalExpense = periodItems
     .filter((c) => c.type === 'Pengeluaran')
     .reduce((sum, c) => sum + c.amount, 0);
 
-  const finalBalance = initialBalance + totalIncome - totalExpense; // Rp 9.542.000
+  const finalBalance = periodInitialBalance + totalIncome - totalExpense;
 
-  // Category breakdown for Pengeluaran
-  const expenseOperasionalPos = rtCash
-    .filter((c) => c.type === 'Pengeluaran' && (c.category.includes('Operasional') || c.category.includes('Listrik') || c.category.includes('Pemeliharaan')))
-    .reduce((sum, c) => sum + c.amount, 0); // Rp 1.169.000
+  // Specific breakdown for Period 2 (15 Agu - 14 Sep 2026)
+  const period2Items = rtCash.filter(isPeriod2Item);
+  const expenseOperasionalPosPeriod2 = period2Items
+    .filter(
+      (c) =>
+        c.type === 'Pengeluaran' &&
+        (c.category.includes('Operasional') || c.category.includes('Wifi') || c.category.includes('Token'))
+    )
+    .reduce((sum, c) => sum + c.amount, 0); // Rp 795.000
 
-  const expenseGaji = rtCash
-    .filter((c) => c.type === 'Pengeluaran' && (c.category.includes('Gaji') || c.category.includes('Honor') || c.title.toLowerCase().includes('gaji')))
+  const expenseGajiPeriod2 = period2Items
+    .filter((c) => c.type === 'Pengeluaran' && c.category.includes('Gaji'))
     .reduce((sum, c) => sum + c.amount, 0); // Rp 2.000.000
 
-  const expenseTaman = rtCash
-    .filter((c) => c.type === 'Pengeluaran' && (c.category.includes('Taman') || c.category.includes('Perbaikan Sarana') || c.title.toLowerCase().includes('taman')))
+  const expenseLampuTamanPeriod2 = period2Items
+    .filter(
+      (c) =>
+        c.type === 'Pengeluaran' &&
+        (c.category.includes('Lampu') || c.title.toLowerCase().includes('lampu') || c.id.startsWith('cash-13'))
+    )
+    .reduce((sum, c) => sum + c.amount, 0); // Rp 2.344.500
+
+  const expense17anPeriod2 = period2Items
+    .filter((c) => c.type === 'Pengeluaran' && c.id === 'cash-9')
+    .reduce((sum, c) => sum + c.amount, 0); // Rp 500.000
+
+  // Category breakdown for Period 1 (14 Jul - 14 Agu 2026)
+  const period1Items = rtCash.filter((item) => !isPeriod2Item(item));
+  const expenseOperasionalPosPeriod1 = period1Items
+    .filter(
+      (c) =>
+        c.type === 'Pengeluaran' &&
+        (c.category.includes('Operasional') || c.category.includes('Listrik') || c.category.includes('Pemeliharaan'))
+    )
+    .reduce((sum, c) => sum + c.amount, 0); // Rp 1.169.000
+
+  const expenseGajiPeriod1 = period1Items
+    .filter((c) => c.type === 'Pengeluaran' && (c.category.includes('Gaji') || c.category.includes('Honor')))
+    .reduce((sum, c) => sum + c.amount, 0); // Rp 2.000.000
+
+  const expenseTamanPeriod1 = period1Items
+    .filter((c) => c.type === 'Pengeluaran' && (c.category.includes('Taman') || c.id.startsWith('cash-7')))
     .reduce((sum, c) => sum + c.amount, 0); // Rp 538.000
 
-  // Monthly Matrix Calculations
+  // Monthly Matrix Calculations (January to August 2026)
   const totalHouses = monthlyFees.length; // 43
-  const totalCollectedJanJul = monthlyFees.reduce((sum, h) => sum + h.totalPaid, 0); // Rp 24.100.000
-  const totalArrearsJanJul = monthlyFees.reduce((sum, h) => sum + h.arrears, 0); // Rp 5.400.000
+  const totalCollectedAll = monthlyFees.reduce((sum, h) => sum + h.totalPaid, 0); // Rp 27.100.000
+  const totalArrearsAll = monthlyFees.reduce((sum, h) => sum + h.arrears, 0); // Rp 6.700.000
   const fullyPaidCount = monthlyFees.filter((h) => h.arrears === 0).length;
   const arrearsCount = monthlyFees.filter((h) => h.arrears > 0).length;
 
@@ -152,6 +232,7 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     may: monthlyFees.reduce((sum, h) => sum + (h.payments.may || 0), 0),
     jun: monthlyFees.reduce((sum, h) => sum + (h.payments.jun || 0), 0),
     jul: monthlyFees.reduce((sum, h) => sum + (h.payments.jul || 0), 0),
+    aug: monthlyFees.reduce((sum, h) => sum + (h.payments.aug || 0), 0),
   };
 
   const monthlyPaidHouseCounts = {
@@ -162,6 +243,7 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     may: monthlyFees.filter((h) => !!h.payments.may).length,
     jun: monthlyFees.filter((h) => !!h.payments.jun).length,
     jul: monthlyFees.filter((h) => !!h.payments.jul).length,
+    aug: monthlyFees.filter((h) => !!h.payments.aug).length,
   };
 
   // Filtered Monthly Fees
@@ -183,8 +265,8 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     return matchBlock && matchArrears && matchSearch;
   });
 
-  // Filtered Cash Items
-  const filteredCash = rtCash.filter((item) => {
+  // Filtered Cash Items by active period & search criteria
+  const filteredCash = periodItems.filter((item) => {
     const matchType = typeFilter === 'all' || item.type === typeFilter;
     const matchSearch =
       !searchQuery.trim() ||
@@ -195,13 +277,189 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     return matchType && matchSearch;
   });
 
-  // Copy Narrative Text for WhatsApp
-  const handleCopyNarrative = () => {
-    const narrativeText = `*Laporan Rekapitulasi Kas Green Bussan Village*
+  // Get structured narrative data based on active period
+  const getNarrativeData = () => {
+    if (selectedPeriod === 'period2') {
+      return {
+        titlePeriod: 'Periode: 15 Agustus 2026 – 14 September 2026',
+        subtitle: 'RT 22 • Periode: 15 Agustus 2026 – 14 September 2026',
+        initLabel: 'Saldo Awal (14 Agustus 2026)',
+        initDate: '14 Agustus 2026',
+        initAmount: PERIOD_2_START_BALANCE,
+        finalLabel: 'Saldo Akhir (14 September 2026)',
+        finalDate: '14 September 2026',
+        finalAmount: finalBalance,
+        datePlace: 'Palembang, 14 September 2026',
+        incomeDesc: `• 13 September: Rekap Iuran Masuk Warga sebesar ${formatRupiah(totalIncome)} (Cash: Rp 800.000 + Transfer: Rp 2.200.000).`,
+        expenseHtml: `
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>a. Operasional Pos Security & Fasilitas Umum</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseOperasionalPosPeriod2)}</span>
+            </div>
+            <ul>
+              <li><strong>19 Agustus:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+              <li><strong>28 Agustus:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+              <li><strong>01 September:</strong> Pembayaran Wifi Pos Security (Rp 195.000)</li>
+              <li><strong>13 September:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+            </ul>
+          </div>
+
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>b. Gaji Petugas Security</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseGajiPeriod2)}</span>
+            </div>
+            <ul>
+              <li><strong>05 September:</strong> Pembayaran Gaji Security Malam periode Juli-26 (Rp 2.000.000)</li>
+            </ul>
+          </div>
+
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>c. Penambahan Lampu Taman Depan & Belakang</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseLampuTamanPeriod2)}</span>
+            </div>
+            <ul>
+              <li><strong>01 September:</strong> Belanja material & jasa instalasi penerangan taman:
+                <ul style="margin-top: 3px;">
+                  <li>Kabel NYY Supreme (2x1,5) 50m: Rp 985.000</li>
+                  <li>Stop Kontak Outdoor Broco (2 pcs): Rp 96.000</li>
+                  <li>Kabel NYM (2x1,5) 25m: Rp 175.000</li>
+                  <li>Lampu Hanoch 12W (4 pcs): Rp 92.000</li>
+                  <li>Lampu Sorot Visalux 20W (3 pcs): Rp 126.000</li>
+                  <li>Pipa PVC 0,5 inch (2 btg): Rp 50.000</li>
+                  <li>Pipa Kabel Listrik (12 btg): Rp 36.000</li>
+                  <li>Clamp Kabel: Rp 9.000</li>
+                  <li>Fiting Lampu (3 pcs): Rp 18.000</li>
+                  <li>Tie Kabel: Rp 15.000</li>
+                  <li>Sambungan Kabel (5 pcs): Rp 7.500</li>
+                  <li>Tap Konektor (1 pasang): Rp 35.000</li>
+                  <li>Semen 1 Sak & Pasir 1 Karung: Rp 100.000</li>
+                  <li>Jasa Teknisi Pemasangan: Rp 600.000</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>d. Tambahan Dana Konsumsi Malam 17an</span>
+              <span style="color: #e11d48;">${formatRupiah(expense17anPeriod2)}</span>
+            </div>
+            <ul>
+              <li><strong>17 Agustus:</strong> Tambahan Dana Konsumsi untuk Malam 17an (Rp 500.000)</li>
+            </ul>
+          </div>
+        `,
+        textWa: `*Laporan Rekapitulasi Kas Green Bussan Village*
+*(Periode: 15 Agustus 2026 – 14 September 2026)*
+
+*1. Ringkasan Kas*
+• Saldo Awal (14 Agustus 2026): ${formatRupiah(PERIOD_2_START_BALANCE)}
+• Total Pemasukan (Duit Masuk): ${formatRupiah(totalIncome)}
+• Total Pengeluaran (Duit Keluar): ${formatRupiah(totalExpense)}
+• *Saldo Akhir (14 September 2026): ${formatRupiah(finalBalance)}*
+
+*2. Rincian Pemasukan (Duit Masuk)*
+• 13 September: Rekap Iuran Masuk Warga sebesar ${formatRupiah(totalIncome)} (Cash: Rp 800.000 + Transfer: Rp 2.200.000).
+
+*3. Rincian Pengeluaran (Duit Keluar)*
+Total pengeluaran sebesar ${formatRupiah(totalExpense)} dialokasikan untuk operasional dan fasilitas lingkungan:
+
+*a. Operasional Pos Security & Fasilitas Umum (${formatRupiah(expenseOperasionalPosPeriod2)})*
+• 19 Agustus: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
+• 28 Agustus: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
+• 01 September: Pembayaran Wifi Pos Security (${formatRupiah(195000)})
+• 13 September: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
+
+*b. Gaji Petugas (${formatRupiah(expenseGajiPeriod2)})*
+• 05 September: Pembayaran Gaji Security Malam periode Juli 2026 (${formatRupiah(2000000)})
+
+*c. Penambahan Lampu Taman Depan & Belakang (${formatRupiah(expenseLampuTamanPeriod2)})*
+• 01 September: Belanja Material & Jasa Pemasangan Lampu Taman:
+  - Kabel NYY Supreme (2x1,5) 50m: ${formatRupiah(985000)}
+  - Stop Kontak Outdoor Broco 2 pcs: ${formatRupiah(96000)}
+  - Kabel NYM (2x1,5) 25m: ${formatRupiah(175000)}
+  - Lampu Hanoch 12W 4 pcs: ${formatRupiah(92000)}
+  - Lampu Sorot Visalux 20W 3 pcs: ${formatRupiah(126000)}
+  - Pipa PVC 0,5 inch 2 btg: ${formatRupiah(50000)}
+  - Pipa Kabel Listrik 12 btg: ${formatRupiah(36000)}
+  - Clamp Kabel: ${formatRupiah(9000)}
+  - Fiting Lampu 3 pcs: ${formatRupiah(18000)}
+  - Tie Kabel: ${formatRupiah(15000)}
+  - Sambungan Kabel 5 pcs: ${formatRupiah(7500)}
+  - Tap Konektor 1 pasang: ${formatRupiah(35000)}
+  - Semen 1 Sak & Pasir 1 Karung: ${formatRupiah(100000)}
+  - Jasa Teknisi Pemasangan: ${formatRupiah(600000)}
+
+*d. Tambahan Dana Konsumsi Malam 17an (${formatRupiah(expense17anPeriod2)})*
+• 17 Agustus: Tambahan Dana Konsumsi untuk Malam 17an (${formatRupiah(500000)})
+
+*Perhitungan Saldo Akhir:*
+${formatRupiah(PERIOD_2_START_BALANCE)} (Saldo Awal) + ${formatRupiah(totalIncome)} (Pemasukan) - ${formatRupiah(totalExpense)} (Pengeluaran) = *${formatRupiah(finalBalance)}*
+
+_Pengurus Green Bussan Village_`,
+      };
+    } else if (selectedPeriod === 'period1') {
+      return {
+        titlePeriod: 'Periode: 14 Juli 2026 – 14 Agustus 2026',
+        subtitle: 'RT 22 • Periode: 14 Juli 2026 – 14 Agustus 2026',
+        initLabel: 'Saldo Awal (14 Juli 2026)',
+        initDate: '14 Juli 2026',
+        initAmount: INITIAL_RT_CASH_BALANCE,
+        finalLabel: 'Saldo Akhir (14 Agustus 2026)',
+        finalDate: '14 Agustus 2026',
+        finalAmount: finalBalance,
+        datePlace: 'Palembang, 14 Agustus 2026',
+        incomeDesc: `• 14 Agustus: Rekap Iuran Masuk Warga sebesar ${formatRupiah(totalIncome)} (pembayaran iuran 31 KK perumahan Green Bussan).`,
+        expenseHtml: `
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>a. Operasional Pos Security & Fasilitas Umum</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseOperasionalPosPeriod1)}</span>
+            </div>
+            <ul>
+              <li><strong>17 Juli:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+              <li><strong>28 Juli:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+              <li><strong>30 Juli:</strong> Pembayaran Wifi Pos Security (Rp 193.000)</li>
+              <li><strong>31 Juli:</strong> Perbaikan MCB Pos (2 unit MCB + Jasa Pasang: Rp 176.000)</li>
+              <li><strong>06 Agustus:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+            </ul>
+          </div>
+
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>b. Gaji Petugas Security</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseGajiPeriod1)}</span>
+            </div>
+            <ul>
+              <li><strong>05 Agustus:</strong> Pembayaran Gaji Security Malam periode Juli 2026 (Rp 2.000.000)</li>
+            </ul>
+          </div>
+
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>c. Perawatan & Perbaikan Taman</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseTamanPeriod1)}</span>
+            </div>
+            <ul>
+              <li><strong>12 Agustus:</strong> Belanja material dan pengerjaan taman:
+                <ul style="margin-top: 3px;">
+                  <li>4 Kaleng Cat (@ Rp 84.000): Rp 336.000</li>
+                  <li>2 Kaleng Thinner (@ Rp 46.000): Rp 92.000</li>
+                  <li>2 Kuas Cat (@ Rp 5.000): Rp 10.000</li>
+                  <li>Upah Tukang Cat: Rp 100.000</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        `,
+        textWa: `*Laporan Rekapitulasi Kas Green Bussan Village*
 *(Periode: 14 Juli 2026 – 14 Agustus 2026)*
 
 *1. Ringkasan Kas*
-• Saldo Awal (14 Juli 2026): ${formatRupiah(initialBalance)}
+• Saldo Awal (14 Juli 2026): ${formatRupiah(INITIAL_RT_CASH_BALANCE)}
 • Total Pemasukan (Duit Masuk): ${formatRupiah(totalIncome)}
 • Total Pengeluaran (Duit Keluar): ${formatRupiah(totalExpense)}
 • *Saldo Akhir (14 Agustus 2026): ${formatRupiah(finalBalance)}*
@@ -212,17 +470,17 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
 *3. Rincian Pengeluaran (Duit Keluar)*
 Total pengeluaran sebesar ${formatRupiah(totalExpense)} dialokasikan untuk operasional dan perawatan lingkungan:
 
-*a. Operasional Pos Security & Fasilitas Umum (${formatRupiah(expenseOperasionalPos || 1169000)})*
+*a. Operasional Pos Security & Fasilitas Umum (${formatRupiah(expenseOperasionalPosPeriod1)})*
 • 17 Juli: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
 • 28 Juli: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
 • 30 Juli: Pembayaran Wifi Pos Security (${formatRupiah(193000)})
 • 31 Juli: Perbaikan MCB Pos (2 unit MCB + Jasa Pasang: ${formatRupiah(176000)})
 • 06 Agustus: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
 
-*b. Gaji Petugas (${formatRupiah(expenseGaji || 2000000)})*
+*b. Gaji Petugas (${formatRupiah(expenseGajiPeriod1)})*
 • 05 Agustus: Pembayaran Gaji Security Malam periode Juli 2026 (${formatRupiah(2000000)})
 
-*c. Perawatan & Perbaikan Taman (${formatRupiah(expenseTaman || 538000)})*
+*c. Perawatan & Perbaikan Taman (${formatRupiah(expenseTamanPeriod1)})*
 • 12 Agustus: Belanja material dan pengerjaan taman:
   - 4 Kaleng Cat (@ Rp 84.000): ${formatRupiah(336000)}
   - 2 Kaleng Thinner (@ Rp 46.000): ${formatRupiah(92000)}
@@ -230,11 +488,73 @@ Total pengeluaran sebesar ${formatRupiah(totalExpense)} dialokasikan untuk opera
   - Upah Tukang Cat: ${formatRupiah(100000)}
 
 *Perhitungan Saldo Akhir:*
-${formatRupiah(initialBalance)} (Saldo Awal) + ${formatRupiah(totalIncome)} (Pemasukan) - ${formatRupiah(totalExpense)} (Pengeluaran) = *${formatRupiah(finalBalance)}*
+${formatRupiah(INITIAL_RT_CASH_BALANCE)} (Saldo Awal) + ${formatRupiah(totalIncome)} (Pemasukan) - ${formatRupiah(totalExpense)} (Pengeluaran) = *${formatRupiah(finalBalance)}*
 
-_Pengurus Green Bussan Village_`;
+_Pengurus Green Bussan Village_`,
+      };
+    } else {
+      return {
+        titlePeriod: 'Akumulatif (14 Juli 2026 – 14 September 2026)',
+        subtitle: 'RT 22 • Rekap Kas Akumulatif (14 Juli – 14 September 2026)',
+        initLabel: 'Saldo Awal (14 Juli 2026)',
+        initDate: '14 Juli 2026',
+        initAmount: INITIAL_RT_CASH_BALANCE,
+        finalLabel: 'Saldo Kas Terkini (14 September 2026)',
+        finalDate: '14 September 2026',
+        finalAmount: finalBalance,
+        datePlace: 'Palembang, 14 September 2026',
+        incomeDesc: `• Total Penerimaan Iuran Warga Periode Juli (Rp 3.100.000) dan Periode Agustus (Rp 3.000.000) sebesar ${formatRupiah(totalIncome)}.`,
+        expenseHtml: `
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>a. Total Operasional Pos Security & Fasilitas</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseOperasionalPosPeriod1 + expenseOperasionalPosPeriod2)}</span>
+            </div>
+            <p style="font-size: 11px; margin: 0; color: #475569;">Token listrik, wifi bulanan, dan perawatan instalasi pos security.</p>
+          </div>
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>b. Total Gaji Petugas Security (2 Periode)</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseGajiPeriod1 + expenseGajiPeriod2)}</span>
+            </div>
+            <p style="font-size: 11px; margin: 0; color: #475569;">Honor security malam per bulan @ Rp 2.000.000.</p>
+          </div>
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>c. Perawatan Taman & Penambahan Lampu Penerangan</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseTamanPeriod1 + expenseLampuTamanPeriod2)}</span>
+            </div>
+            <p style="font-size: 11px; margin: 0; color: #475569;">Pengecatan taman (Rp 538.000) dan instalasi 14 item lampu taman (Rp 2.344.500).</p>
+          </div>
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>d. Konsumsi Perayaan 17 Agustus</span>
+              <span style="color: #e11d48;">${formatRupiah(expense17anPeriod2)}</span>
+            </div>
+            <p style="font-size: 11px; margin: 0; color: #475569;">Tambahan konsumsi malam 17an warga.</p>
+          </div>
+        `,
+        textWa: `*Laporan Rekapitulasi Kas Akumulatif Green Bussan Village*
+*(Periode: 14 Juli 2026 – 14 September 2026)*
 
-    navigator.clipboard.writeText(narrativeText);
+*1. Ringkasan Kas*
+• Saldo Awal (14 Juli 2026): ${formatRupiah(INITIAL_RT_CASH_BALANCE)}
+• Total Pemasukan: ${formatRupiah(totalIncome)}
+• Total Pengeluaran: ${formatRupiah(totalExpense)}
+• *Saldo Kas Terkini (14 September 2026): ${formatRupiah(finalBalance)}*
+
+*Perhitungan:*
+${formatRupiah(INITIAL_RT_CASH_BALANCE)} + ${formatRupiah(totalIncome)} - ${formatRupiah(totalExpense)} = *${formatRupiah(finalBalance)}*
+
+_Pengurus Green Bussan Village_`,
+      };
+    }
+  };
+
+  // Copy Narrative Text for WhatsApp
+  const handleCopyNarrative = () => {
+    const data = getNarrativeData();
+    navigator.clipboard.writeText(data.textWa);
     setCopiedNarrative(true);
     setTimeout(() => setCopiedNarrative(false), 2500);
   };
@@ -246,6 +566,8 @@ _Pengurus Green Bussan Village_`;
       alert('Mohon izinkan popup browser untuk mencetak laporan.');
       return;
     }
+
+    const data = getNarrativeData();
 
     const html = `
       <!DOCTYPE html>
@@ -282,15 +604,15 @@ _Pengurus Green Bussan Village_`;
       <body>
         <div class="header">
           <h1 class="title">LAPORAN REKAPITULASI KAS GREEN BUSSAN VILLAGE</h1>
-          <p class="subtitle">RT 22 • Periode: 14 Juli 2026 – 14 Agustus 2026</p>
+          <p class="subtitle">${data.subtitle}</p>
         </div>
 
         <div class="section">
           <div class="section-title">1. RINGKASAN KAS</div>
           <div class="summary-grid">
             <div class="summary-card">
-              <div class="card-lbl">Saldo Awal (14 Juli 2026)</div>
-              <div class="card-val">${formatRupiah(initialBalance)}</div>
+              <div class="card-lbl">${data.initLabel}</div>
+              <div class="card-val">${formatRupiah(data.initAmount)}</div>
             </div>
             <div class="summary-card">
               <div class="card-lbl">Total Pemasukan</div>
@@ -301,8 +623,8 @@ _Pengurus Green Bussan Village_`;
               <div class="card-val val-expense">${formatRupiah(totalExpense)}</div>
             </div>
             <div class="summary-card final">
-              <div class="card-lbl" style="color: #854d0e;">Saldo Akhir (14-Aug-2026)</div>
-              <div class="card-val val-final">${formatRupiah(finalBalance)}</div>
+              <div class="card-lbl" style="color: #854d0e;">${data.finalLabel}</div>
+              <div class="card-val val-final">${formatRupiah(data.finalAmount)}</div>
             </div>
           </div>
         </div>
@@ -311,7 +633,7 @@ _Pengurus Green Bussan Village_`;
           <div class="section-title">2. RINCIAN PEMASUKAN (DUIT MASUK)</div>
           <div class="pos-box" style="background: #f0fdf4; border-color: #bbf7d0;">
             <p style="margin: 0; font-size: 12px; font-weight: 600; color: #166534;">
-              • <strong>14 Agustus:</strong> Rekap Iuran Masuk Warga sebesar <strong>${formatRupiah(totalIncome)}</strong> (pembayaran iuran 31 KK perumahan Green Bussan).
+              ${data.incomeDesc}
             </p>
           </div>
         </div>
@@ -319,68 +641,28 @@ _Pengurus Green Bussan Village_`;
         <div class="section">
           <div class="section-title">3. RINCIAN PENGELUARAN (DUIT KELUAR)</div>
           <p style="margin-top: 0; margin-bottom: 10px; font-size: 11px; color: #64748b;">
-            Total pengeluaran sebesar <strong>${formatRupiah(totalExpense)}</strong> dialokasikan untuk operasional dan perawatan lingkungan dengan rincian:
+            Total pengeluaran sebesar <strong>${formatRupiah(totalExpense)}</strong> dialokasikan untuk operasional dan fasilitas lingkungan:
           </p>
-
-          <div class="pos-box">
-            <div class="pos-header">
-              <span>a. Operasional Pos Security & Fasilitas Umum</span>
-              <span style="color: #e11d48;">${formatRupiah(expenseOperasionalPos || 1169000)}</span>
-            </div>
-            <ul>
-              <li><strong>17 Juli:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
-              <li><strong>28 Juli:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
-              <li><strong>30 Juli:</strong> Pembayaran Wifi Pos Security (Rp 193.000)</li>
-              <li><strong>31 Juli:</strong> Perbaikan MCB Pos (2 unit MCB + Jasa Pasang: Rp 176.000)</li>
-              <li><strong>06 Agustus:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
-            </ul>
-          </div>
-
-          <div class="pos-box">
-            <div class="pos-header">
-              <span>b. Gaji Petugas</span>
-              <span style="color: #e11d48;">${formatRupiah(expenseGaji || 2000000)}</span>
-            </div>
-            <ul>
-              <li><strong>05 Agustus:</strong> Pembayaran Gaji Security Malam periode Juli 2026 (Rp 2.000.000)</li>
-            </ul>
-          </div>
-
-          <div class="pos-box">
-            <div class="pos-header">
-              <span>c. Perawatan & Perbaikan Taman</span>
-              <span style="color: #e11d48;">${formatRupiah(expenseTaman || 538000)}</span>
-            </div>
-            <ul>
-              <li><strong>12 Agustus:</strong> Belanja material dan pengerjaan taman:
-                <ul style="margin-top: 3px;">
-                  <li>4 Kaleng Cat (@ Rp 84.000): Rp 336.000</li>
-                  <li>2 Kaleng Thinner (@ Rp 46.000): Rp 92.000</li>
-                  <li>2 Kuas Cat (@ Rp 5.000): Rp 10.000</li>
-                  <li>Upah Tukang Cat: Rp 100.000</li>
-                </ul>
-              </li>
-            </ul>
-          </div>
+          ${data.expenseHtml}
         </div>
 
         <div class="formula-box">
           Perhitungan Saldo Akhir:<br>
-          ${formatRupiah(initialBalance)} (Saldo Awal) + ${formatRupiah(totalIncome)} (Pemasukan) - ${formatRupiah(totalExpense)} (Pengeluaran) = <span style="font-size: 15px; text-decoration: underline;">${formatRupiah(finalBalance)}</span>
+          ${formatRupiah(data.initAmount)} (Saldo Awal) + ${formatRupiah(totalIncome)} (Pemasukan) - ${formatRupiah(totalExpense)} (Pengeluaran) = <span style="font-size: 15px; text-decoration: underline;">${formatRupiah(data.finalAmount)}</span>
         </div>
 
         <div class="signature-area">
           <div class="sig-box">
             <p>Mengetahui,</p>
-            <p style="font-weight: bold; margin-top: 5px;">Bendahara Green Bussan Village</p>
+            <p style="font-weight: bold; margin-top: 5px;">Ketua Lingkungan Green Bussan Village</p>
             <div style="height: 45px;"></div>
-            <p style="text-decoration: underline; font-weight: bold;">( Riyadi )</p>
+            <p style="text-decoration: underline; font-weight: bold;">( Tri Sulistyo )</p>
           </div>
           <div class="sig-box">
-            <p>Palembang, 14 Agustus 2026</p>
+            <p>${data.datePlace}</p>
             <p style="font-weight: bold; margin-top: 5px;">Bendahara Kas Warga</p>
             <div style="height: 45px;"></div>
-            <p style="text-decoration: underline; font-weight: bold;">( Bendahara Pengurus )</p>
+            <p style="text-decoration: underline; font-weight: bold;">( Riyadi )</p>
           </div>
         </div>
 
@@ -418,7 +700,7 @@ _Pengurus Green Bussan Village_`;
           .card-lbl { font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; }
           .card-val { font-size: 14px; font-weight: bold; margin-top: 2px; }
           table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-          th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: center; }
+          th, td { border: 1px solid #cbd5e1; padding: 6px 6px; text-align: center; }
           th { background: #0f766e; color: #ffffff; font-weight: bold; }
           .text-left { text-align: left; }
           .text-right { text-align: right; }
@@ -437,7 +719,7 @@ _Pengurus Green Bussan Village_`;
       <body>
         <div class="header">
           <h1 class="title">IURAN BULANAN PERUMAHAN GREEN BUSSAN VILLAGE</h1>
-          <p class="subtitle">Rekap Matriks Pembayaran Warga Green Bussan Village Periode Januari - Juli 2026</p>
+          <p class="subtitle">Rekap Matriks Pembayaran Warga Green Bussan Village Periode Januari – Agustus 2026</p>
           <p class="subtitle">Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
 
@@ -447,12 +729,12 @@ _Pengurus Green Bussan Village_`;
             <div class="card-val" style="color: #0f766e;">43 Unit / KK</div>
           </div>
           <div class="summary-card">
-            <div class="card-lbl">Total Iuran Terkumpul (Jan - Jul)</div>
-            <div class="card-val" style="color: #059669;">${formatRupiah(totalCollectedJanJul)}</div>
+            <div class="card-lbl">Total Iuran Terkumpul (Jan - Agu)</div>
+            <div class="card-val" style="color: #059669;">${formatRupiah(totalCollectedAll)}</div>
           </div>
           <div class="summary-card">
             <div class="card-lbl">Total Tunggakan Warga</div>
-            <div class="card-val" style="color: #e11d48;">${formatRupiah(totalArrearsJanJul)}</div>
+            <div class="card-val" style="color: #e11d48;">${formatRupiah(totalArrearsAll)}</div>
           </div>
           <div class="summary-card">
             <div class="card-lbl">Tingkat Ketertiban Lunas</div>
@@ -465,7 +747,7 @@ _Pengurus Green Bussan Village_`;
             <tr>
               <th style="width: 25px;">No</th>
               <th style="width: 65px;">Blok/Rumah</th>
-              <th style="width: 65px;">Iuran/Bln</th>
+              <th style="width: 60px;">Iuran/Bln</th>
               <th>Jan-26</th>
               <th>Feb-26</th>
               <th>Mar-26</th>
@@ -473,6 +755,7 @@ _Pengurus Green Bussan Village_`;
               <th>Mei-26</th>
               <th>Jun-26</th>
               <th>Jul-26</th>
+              <th>Agu-26</th>
               <th style="width: 75px;">Rekap Iuran</th>
               <th style="width: 70px;">Tunggakan</th>
             </tr>
@@ -492,6 +775,7 @@ _Pengurus Green Bussan Village_`;
                 <td class="${row.payments.may ? 'paid' : 'unpaid'}">${row.payments.may ? '100k' : '-'}</td>
                 <td class="${row.payments.jun ? 'paid' : 'unpaid'}">${row.payments.jun ? '100k' : '-'}</td>
                 <td class="${row.payments.jul ? 'paid' : 'unpaid'}">${row.payments.jul ? '100k' : '-'}</td>
+                <td class="${row.payments.aug ? 'paid' : 'unpaid'}">${row.payments.aug ? '100k' : '-'}</td>
                 <td class="text-right paid">${formatRupiah(row.totalPaid)}</td>
                 <td class="text-right ${row.arrears > 0 ? 'arrears' : ''}">${row.arrears > 0 ? formatRupiah(row.arrears) : '-'}</td>
               </tr>
@@ -507,8 +791,9 @@ _Pengurus Green Bussan Village_`;
               <td>${formatRupiah(monthlyTotals.may)}</td>
               <td>${formatRupiah(monthlyTotals.jun)}</td>
               <td>${formatRupiah(monthlyTotals.jul)}</td>
-              <td class="text-right paid">${formatRupiah(totalCollectedJanJul)}</td>
-              <td class="text-right arrears">${formatRupiah(totalArrearsJanJul)}</td>
+              <td>${formatRupiah(monthlyTotals.aug)}</td>
+              <td class="text-right paid">${formatRupiah(totalCollectedAll)}</td>
+              <td class="text-right arrears">${formatRupiah(totalArrearsAll)}</td>
             </tr>
           </tbody>
         </table>
@@ -524,7 +809,7 @@ _Pengurus Green Bussan Village_`;
             <p>Palembang, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             <p style="font-weight: bold; margin-top: 5px;">Bendahara Kas Warga</p>
             <div style="height: 45px;"></div>
-            <p style="text-decoration: underline; font-weight: bold;">( Bendahara Pengurus )</p>
+            <p style="text-decoration: underline; font-weight: bold;">( Riyadi )</p>
           </div>
         </div>
 
@@ -583,24 +868,24 @@ _Pengurus Green Bussan Village_`;
       <body>
         <div class="header">
           <h1 class="title">REKAP TRANSAKSI KAS WARGA</h1>
-          <p class="subtitle">Green Bussan Village • Periode 14 Juli s/d 14 Agustus 2026</p>
+          <p class="subtitle">Green Bussan Village • ${periodLabel}</p>
         </div>
 
         <div class="summary-box">
           <div class="card">
-            <div class="card-title">Saldo 14 Juli 2026</div>
-            <div class="card-val val-balance">${formatRupiah(initialBalance)}</div>
+            <div class="card-title">Saldo Awal (${periodInitialDate})</div>
+            <div class="card-val val-balance">${formatRupiah(periodInitialBalance)}</div>
           </div>
           <div class="card">
-            <div class="card-title">Total Debit (Keluar)</div>
+            <div class="card-title">Total Pengeluaran</div>
             <div class="card-val val-expense">${formatRupiah(totalExpense)}</div>
           </div>
           <div class="card">
-            <div class="card-title">Total Kredit (Masuk)</div>
+            <div class="card-title">Total Pemasukan</div>
             <div class="card-val val-income">${formatRupiah(totalIncome)}</div>
           </div>
           <div class="card" style="background: #fef9c3; border-color: #fde047;">
-            <div class="card-title" style="color: #854d0e;">SALDO AKHIR (14-Aug)</div>
+            <div class="card-title" style="color: #854d0e;">SALDO KAS AKHIR</div>
             <div class="card-val" style="color: #854d0e; font-size: 15px;">${formatRupiah(finalBalance)}</div>
           </div>
         </div>
@@ -618,15 +903,15 @@ _Pengurus Green Bussan Village_`;
           <tbody>
             <!-- Saldo Awal -->
             <tr style="background: #f8fafc; font-weight: bold;">
-              <td>${INITIAL_RT_CASH_DATE}</td>
-              <td>${INITIAL_RT_CASH_TITLE}</td>
+              <td>${periodInitialDate}</td>
+              <td>${selectedPeriod === 'period2' ? 'Saldo Kas Awal Periode 2 (Rekap Periode 14 Juli - 14 Agustus 2026)' : INITIAL_RT_CASH_TITLE}</td>
               <td class="text-right">-</td>
               <td class="text-right">-</td>
-              <td class="text-right saldo">${formatRupiah(initialBalance)}</td>
+              <td class="text-right saldo">${formatRupiah(periodInitialBalance)}</td>
             </tr>
 
             <!-- Transactions -->
-            ${rtCash
+            ${filteredCash
               .map(
                 (item) => `
               <tr>
@@ -653,8 +938,8 @@ _Pengurus Green Bussan Village_`;
 
             <!-- Saldo Akhir Highlight Row -->
             <tr class="highlight-row">
-              <td>14-Aug</td>
-              <td style="font-weight: 900; letter-spacing: 0.5px;">SALDO AKHIR</td>
+              <td>${periodEndDate}</td>
+              <td style="font-weight: 900; letter-spacing: 0.5px;">SALDO KAS AKHIR</td>
               <td class="text-right">-</td>
               <td class="text-right">-</td>
               <td class="text-right saldo" style="font-size: 13px; color: #0f172a;">${formatRupiah(finalBalance)}</td>
@@ -670,10 +955,10 @@ _Pengurus Green Bussan Village_`;
             <p style="text-decoration: underline; font-weight: bold;">( Tri Sulistyo )</p>
           </div>
           <div class="sig-box">
-            <p>Palembang, 14 Agustus 2026</p>
+            <p>Palembang, ${periodEndDate}</p>
             <p style="font-weight: bold; margin-top: 5px;">Bendahara Kas Warga</p>
             <div style="height: 45px;"></div>
-            <p style="text-decoration: underline; font-weight: bold;">( Bendahara Pengurus )</p>
+            <p style="text-decoration: underline; font-weight: bold;">( Riyadi )</p>
           </div>
         </div>
 
@@ -687,6 +972,8 @@ _Pengurus Green Bussan Village_`;
     printWindow.document.write(html);
     printWindow.document.close();
   };
+
+  const narrativeData = getNarrativeData();
 
   return (
     <div className="space-y-6 pb-16">
@@ -704,15 +991,52 @@ _Pengurus Green Bussan Village_`;
               Buku Kas & Iuran Warga
             </h1>
             <p className="text-emerald-100/90 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Laporan Rekapitulasi Kas periode 14 Juli – 14 Agustus 2026 dan pencatatan iuran bulanan 43 rumah (@Rp 100.000/bulan) perumahan Green Bussan Village.
+              Laporan Rekapitulasi Kas RT 22 s/d Periode 15 Agustus – 14 September 2026 dan pencatatan iuran bulanan 43 rumah (@Rp 100.000/bulan) perumahan Green Bussan Village.
             </p>
+
+            {/* Period Selector in Banner */}
+            <div className="pt-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-emerald-300/90 font-medium">Pilih Periode:</span>
+              <div className="inline-flex bg-black/30 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs">
+                <button
+                  onClick={() => setSelectedPeriod('period2')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                    selectedPeriod === 'period2'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-emerald-200 hover:text-white'
+                  }`}
+                >
+                  Periode 2 (15 Agu – 14 Sep 2026) ★ Terkini
+                </button>
+                <button
+                  onClick={() => setSelectedPeriod('period1')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                    selectedPeriod === 'period1'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-emerald-200 hover:text-white'
+                  }`}
+                >
+                  Periode 1 (14 Jul – 14 Agu 2026)
+                </button>
+                <button
+                  onClick={() => setSelectedPeriod('all')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                    selectedPeriod === 'all'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-emerald-200 hover:text-white'
+                  }`}
+                >
+                  Semua (Akumulatif)
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
             {onResetOfficialRTCash && (
               <button
                 onClick={handleRequestSyncOfficial}
-                title="Sinkronkan ke Data Kas Resmi (Pemasukan: Rp 3.100.000, Pengeluaran: Rp 3.507.000)"
+                title="Sinkronkan ke Data Kas Resmi Warga"
                 className="bg-white/10 hover:bg-white/20 text-white font-medium text-xs px-3 py-2.5 rounded-2xl border border-white/20 backdrop-blur-sm transition-all flex items-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-emerald-300" />
@@ -780,20 +1104,20 @@ _Pengurus Green Bussan Village_`;
             </div>
             <div className="mt-2">
               <p className="text-xl sm:text-2xl font-black text-white">{formatRupiah(finalBalance)}</p>
-              <p className="text-[10px] text-emerald-300/80 mt-0.5">Per 14 Agustus 2026</p>
+              <p className="text-[10px] text-emerald-300/80 mt-0.5">Per {periodEndDate}</p>
             </div>
           </div>
 
           <div className="bg-slate-900/70 border border-slate-700 rounded-2xl p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-slate-300 font-bold uppercase tracking-wider">Saldo Awal (14-Jul)</span>
+              <span className="text-[11px] text-slate-300 font-bold uppercase tracking-wider">Saldo Awal</span>
               <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-2">
-              <p className="text-xl sm:text-2xl font-black text-emerald-400">{formatRupiah(initialBalance)}</p>
-              <p className="text-[10px] text-slate-300 mt-0.5">Saldo 14 Juli 2026</p>
+              <p className="text-xl sm:text-2xl font-black text-emerald-400">{formatRupiah(periodInitialBalance)}</p>
+              <p className="text-[10px] text-slate-300 mt-0.5">Per {periodInitialDate}</p>
             </div>
           </div>
 
@@ -806,7 +1130,9 @@ _Pengurus Green Bussan Village_`;
             </div>
             <div className="mt-2">
               <p className="text-xl sm:text-2xl font-black text-teal-200">{formatRupiah(totalIncome)}</p>
-              <p className="text-[10px] text-teal-300/80 mt-0.5">Rekap Iuran Masuk (Juli-26)</p>
+              <p className="text-[10px] text-teal-300/80 mt-0.5">
+                {selectedPeriod === 'period2' ? 'Iuran Masuk 13-Sep' : selectedPeriod === 'period1' ? 'Iuran Masuk 14-Agu' : 'Total Penerimaan Iuran'}
+              </p>
             </div>
           </div>
 
@@ -819,7 +1145,9 @@ _Pengurus Green Bussan Village_`;
             </div>
             <div className="mt-2">
               <p className="text-xl sm:text-2xl font-black text-rose-300">{formatRupiah(totalExpense)}</p>
-              <p className="text-[10px] text-rose-300/80 mt-0.5">Operasional, Gaji & Taman</p>
+              <p className="text-[10px] text-rose-300/80 mt-0.5">
+                {selectedPeriod === 'period2' ? 'Pos, Gaji, Lampu & 17an' : selectedPeriod === 'period1' ? 'Pos, Gaji & Cat Taman' : 'Total Pengeluaran Kas'}
+              </p>
             </div>
           </div>
         </div>
@@ -854,7 +1182,7 @@ _Pengurus Green Bussan Village_`;
             }`}
           >
             <Receipt className="w-4 h-4 text-emerald-600" />
-            Buku Transaksi Kas ({rtCash.length})
+            Buku Transaksi Kas ({filteredCash.length})
           </button>
           <button
             onClick={() => {
@@ -868,7 +1196,7 @@ _Pengurus Green Bussan Village_`;
             }`}
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            Matriks Iuran 43 Rumah (Jan - Jul)
+            Matriks Iuran 43 Rumah (Jan - Agu)
           </button>
         </div>
 
@@ -878,9 +1206,9 @@ _Pengurus Green Bussan Village_`;
             <span className="font-semibold text-emerald-900">Tarif Iuran: Rp 100.000 / Rumah / Bulan</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-xs text-slate-500 px-3 py-1 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="flex items-center gap-2 text-xs px-3 py-1 bg-slate-50 rounded-xl border border-slate-200">
             <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-            <span className="font-semibold text-slate-700">Periode: 14 Juli – 14 Agustus 2026</span>
+            <span className="font-semibold text-slate-700">{periodLabel}</span>
           </div>
         )}
       </div>
@@ -898,7 +1226,7 @@ _Pengurus Green Bussan Village_`;
                     Laporan Rekapitulasi Kas Green Bussan Village
                   </h2>
                   <p className="text-sm font-semibold text-emerald-700 mt-1">
-                    (Periode: 14 Juli 2026 – 14 Agustus 2026)
+                    ({narrativeData.titlePeriod})
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -933,8 +1261,8 @@ _Pengurus Green Bussan Village_`;
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                  <p className="text-xs font-semibold text-slate-500">Saldo Awal (14 Juli 2026)</p>
-                  <p className="text-lg sm:text-xl font-black text-slate-900 mt-1">{formatRupiah(initialBalance)}</p>
+                  <p className="text-xs font-semibold text-slate-500">{narrativeData.initLabel}</p>
+                  <p className="text-lg sm:text-xl font-black text-slate-900 mt-1">{formatRupiah(narrativeData.initAmount)}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
                   <p className="text-xs font-semibold text-emerald-700">Total Pemasukan (Duit Masuk)</p>
@@ -945,8 +1273,8 @@ _Pengurus Green Bussan Village_`;
                   <p className="text-lg sm:text-xl font-black text-rose-800 mt-1">{formatRupiah(totalExpense)}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 shadow-xs">
-                  <p className="text-xs font-bold text-amber-900">Saldo Akhir (14 Agustus 2026)</p>
-                  <p className="text-lg sm:text-xl font-black text-amber-950 mt-1">{formatRupiah(finalBalance)}</p>
+                  <p className="text-xs font-bold text-amber-900">{narrativeData.finalLabel}</p>
+                  <p className="text-lg sm:text-xl font-black text-amber-950 mt-1">{formatRupiah(narrativeData.finalAmount)}</p>
                 </div>
               </div>
             </div>
@@ -969,7 +1297,7 @@ _Pengurus Green Bussan Village_`;
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-200 text-emerald-900">
-                      14 Agustus
+                      {selectedPeriod === 'period2' ? '13 September' : selectedPeriod === 'period1' ? '14 Agustus' : 'Rekap Bulanan'}
                     </span>
                     <span className="text-sm sm:text-base font-bold text-slate-900">
                       Rekap Iuran Masuk Warga
@@ -979,7 +1307,11 @@ _Pengurus Green Bussan Village_`;
                     {formatRupiah(totalIncome)}
                   </p>
                   <p className="text-xs text-slate-600">
-                    Penerimaan total rekapitulasi iuran bulanan 31 KK perumahan Green Bussan Village periode Juli 2026.
+                    {selectedPeriod === 'period2' 
+                      ? 'Penerimaan iuran warga per 13 September 2026: Cash sebesar Rp 800.000 + Transfer Bank sebesar Rp 2.200.000.'
+                      : selectedPeriod === 'period1'
+                      ? 'Penerimaan total rekapitulasi iuran bulanan 31 KK perumahan Green Bussan Village periode Juli 2026.'
+                      : 'Penerimaan total akumulatif iuran warga Green Bussan Village periode Juli dan Agustus 2026.'}
                   </p>
                 </div>
               </div>
@@ -1002,143 +1334,357 @@ _Pengurus Green Bussan Village_`;
               </div>
 
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Total pengeluaran sebesar <strong className="text-slate-900">{formatRupiah(totalExpense)}</strong> dialokasikan untuk operasional dan perawatan lingkungan dengan rincian:
+                Total pengeluaran sebesar <strong className="text-slate-900">{formatRupiah(totalExpense)}</strong> dialokasikan untuk operasional dan fasilitas lingkungan dengan rincian:
               </p>
 
-              {/* 3 Clusters of Expense */}
-              <div className="space-y-4">
-                {/* Cluster A: Operasional Pos Security & Fasilitas Umum */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
-                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                        <ShieldCheck className="w-4 h-4" />
+              {/* Dynamic Clusters of Expense based on selectedPeriod */}
+              {selectedPeriod === 'period2' ? (
+                <div className="space-y-4">
+                  {/* Cluster A: Operasional Pos Security & Fasilitas Umum */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            a. Operasional Pos Security & Fasilitas Umum
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Token listrik pos & lampu jalan, wifi pos security</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-extrabold text-slate-900">
-                          Operasional Pos Security & Fasilitas Umum
-                        </h4>
-                        <p className="text-[11px] text-slate-500">Listrik token, wifi pos & perbaikan instalasi MCB</p>
-                      </div>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseOperasionalPosPeriod2)}
+                      </span>
                     </div>
-                    <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
-                      {formatRupiah(expenseOperasionalPos || 1169000)}
-                    </span>
+
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700 divide-y divide-slate-100">
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>19 Agustus:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>28 Agustus:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>01 September:</strong> Pembayaran Wifi Pos Security</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(195000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>13 September:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                    </ul>
                   </div>
 
-                  <ul className="space-y-2 text-xs sm:text-sm text-slate-700 divide-y divide-slate-100">
-                    <li className="pt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        <span><strong>17 Juli:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                  {/* Cluster B: Gaji Petugas Security */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                          <UserCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            b. Gaji Petugas Security
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Honor gaji petugas keamanan malam komplek</p>
+                        </div>
                       </div>
-                      <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
-                    </li>
-                    <li className="pt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        <span><strong>28 Juli:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseGajiPeriod2)}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>05 September:</strong> Pembayaran Gaji Security Malam periode Juli 2026</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(2000000)}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Cluster C: Penambahan Lampu Taman Depan & Belakang */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            c. Penambahan Lampu Taman Depan & Belakang
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Pengadaan 14 item material penerangan taman & jasa teknisi pemasangan</p>
+                        </div>
                       </div>
-                      <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
-                    </li>
-                    <li className="pt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        <span><strong>30 Juli:</strong> Pembayaran Wifi Pos Security</span>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseLampuTamanPeriod2)}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <p className="text-xs sm:text-sm font-bold text-slate-800">
+                        <strong>01 September:</strong> Rincian material & upah instalasi:
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Kabel NYY Supreme (2x1,5) 50m</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(985000)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Stop Kontak Outdoor Broco (2)</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(96000)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Kabel NYM (2x1,5) 25m</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(175000)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Lampu Hanoch 12W (4 pcs)</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(92000)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Lampu Sorot Visalux 20W (3 pcs)</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(126000)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Pipa PVC 0,5 inch (2 btg)</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(50000)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Pipa Kabel Listrik (12 btg)</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(36000)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Fiting Lampu & Aksesoris</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(84500)}</span>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                          <span className="text-slate-700">Semen 1 Sak & Pasir 1 Karung</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRupiah(100000)}</span>
+                        </div>
+                        <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex items-center justify-between text-xs sm:col-span-2 lg:col-span-3">
+                          <span className="text-emerald-900 font-bold">Jasa Teknisi Pemasangan & Instalasi</span>
+                          <span className="font-mono font-black text-emerald-900">{formatRupiah(600000)}</span>
+                        </div>
                       </div>
-                      <span className="font-mono font-bold text-slate-900">{formatRupiah(193000)}</span>
-                    </li>
-                    <li className="pt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        <span><strong>31 Juli:</strong> Perbaikan MCB Pos (2 unit MCB + Jasa Pasang)</span>
+                    </div>
+                  </div>
+
+                  {/* Cluster D: Tambahan Dana Konsumsi Malam 17an */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+                          <HeartHandshake className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            d. Tambahan Dana Konsumsi Malam 17an
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Dukungan kas warga untuk konsumsi syukuran malam kemerdekaan RI ke-81</p>
+                        </div>
                       </div>
-                      <span className="font-mono font-bold text-slate-900">{formatRupiah(176000)}</span>
-                    </li>
-                    <li className="pt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        <span><strong>06 Agustus:</strong> Pembelian Token Pos & Lampu Jalan</span>
-                      </div>
-                      <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
-                    </li>
-                  </ul>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expense17anPeriod2)}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>17 Agustus:</strong> Tambahan Dana Konsumsi untuk Malam 17an</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(500000)}</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-
-                {/* Cluster B: Gaji Petugas */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
-                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-                        <UserCheck className="w-4 h-4" />
+              ) : selectedPeriod === 'period1' ? (
+                <div className="space-y-4">
+                  {/* Cluster A: Operasional Pos Security & Fasilitas Umum */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            Operasional Pos Security & Fasilitas Umum
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Listrik token, wifi pos & perbaikan instalasi MCB</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-extrabold text-slate-900">
-                          Gaji Petugas
-                        </h4>
-                        <p className="text-[11px] text-slate-500">Honor gaji petugas keamanan komplek</p>
-                      </div>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseOperasionalPosPeriod1)}
+                      </span>
                     </div>
-                    <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
-                      {formatRupiah(expenseGaji || 2000000)}
-                    </span>
+
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700 divide-y divide-slate-100">
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>17 Juli:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>28 Juli:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>30 Juli:</strong> Pembayaran Wifi Pos Security</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(193000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>31 Juli:</strong> Perbaikan MCB Pos (2 unit MCB + Jasa Pasang)</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(176000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>06 Agustus:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                    </ul>
                   </div>
 
-                  <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
-                    <li className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        <span><strong>05 Agustus:</strong> Pembayaran Gaji Security Malam periode Juli 2026</span>
+                  {/* Cluster B: Gaji Petugas */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                          <UserCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            Gaji Petugas
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Honor gaji petugas keamanan komplek</p>
+                        </div>
                       </div>
-                      <span className="font-mono font-bold text-slate-900">{formatRupiah(2000000)}</span>
-                    </li>
-                  </ul>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseGajiPeriod1)}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>05 Agustus:</strong> Pembayaran Gaji Security Malam periode Juli 2026</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(2000000)}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Cluster C: Perawatan & Perbaikan Taman */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                          <Paintbrush className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            Perawatan & Perbaikan Taman
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Belanja material cat, thinner, kuas & upah pengerjaan tukang</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseTamanPeriod1)}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <p className="text-xs sm:text-sm font-bold text-slate-800">
+                        <strong>12 Agustus:</strong> Belanja material dan pengerjaan taman:
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-3">
+                        <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                          <span className="text-xs text-slate-700">4 Kaleng Cat (@ Rp 84.000)</span>
+                          <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(336000)}</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                          <span className="text-xs text-slate-700">2 Kaleng Thinner (@ Rp 46.000)</span>
+                          <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(92000)}</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                          <span className="text-xs text-slate-700">2 Kuas Cat (@ Rp 5.000)</span>
+                          <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(10000)}</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                          <span className="text-xs text-slate-700">Upah Tukang Cat</span>
+                          <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(100000)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-                {/* Cluster C: Perawatan & Perbaikan Taman */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
-                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                        <Paintbrush className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-extrabold text-slate-900">
-                          Perawatan & Perbaikan Taman
-                        </h4>
-                        <p className="text-[11px] text-slate-500">Belanja material cat, thinner, kuas & upah pengerjaan tukang</p>
-                      </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">a. Total Operasional Pos & Fasilitas (2 Periode)</p>
+                      <p className="text-xs text-slate-500">Token listrik, wifi bulanan & perbaikan fasilitas</p>
                     </div>
-                    <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
-                      {formatRupiah(expenseTaman || 538000)}
-                    </span>
+                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseOperasionalPosPeriod1 + expenseOperasionalPosPeriod2)}</span>
                   </div>
-
-                  <div className="space-y-2.5">
-                    <p className="text-xs sm:text-sm font-bold text-slate-800">
-                      <strong>12 Agustus:</strong> Belanja material dan pengerjaan taman:
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-3">
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="text-xs text-slate-700">4 Kaleng Cat (@ Rp 84.000)</span>
-                        <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(336000)}</span>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="text-xs text-slate-700">2 Kaleng Thinner (@ Rp 46.000)</span>
-                        <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(92000)}</span>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="text-xs text-slate-700">2 Kuas Cat (@ Rp 5.000)</span>
-                        <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(10000)}</span>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                        <span className="text-xs text-slate-700">Upah Tukang Cat</span>
-                        <span className="text-xs font-mono font-bold text-slate-900">{formatRupiah(100000)}</span>
-                      </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">b. Total Gaji Petugas Security (2 Bulan)</p>
+                      <p className="text-xs text-slate-500">Honor gaji petugas security malam</p>
                     </div>
+                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseGajiPeriod1 + expenseGajiPeriod2)}</span>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">c. Perawatan Taman & Penerangan Lampu</p>
+                      <p className="text-xs text-slate-500">Pengecatan taman (538k) & 14 item instalasi lampu taman (2.344.500)</p>
+                    </div>
+                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseTamanPeriod1 + expenseLampuTamanPeriod2)}</span>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">d. Tambahan Konsumsi Malam 17an</p>
+                      <p className="text-xs text-slate-500">Konsumsi perayaan HUT RI ke-81</p>
+                    </div>
+                    <span className="font-mono font-black text-rose-700">{formatRupiah(expense17anPeriod2)}</span>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Perhitungan Saldo Akhir Equation */}
@@ -1148,7 +1694,7 @@ _Pengurus Green Bussan Village_`;
               </p>
               <div className="text-sm sm:text-base font-extrabold text-emerald-950 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 leading-relaxed">
                 <span className="bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
-                  {formatRupiah(initialBalance)} <span className="text-[11px] font-normal text-slate-500">(Saldo Awal)</span>
+                  {formatRupiah(narrativeData.initAmount)} <span className="text-[11px] font-normal text-slate-500">({narrativeData.initLabel})</span>
                 </span>
                 <span className="text-emerald-700 text-lg font-black">+</span>
                 <span className="bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs text-emerald-700">
@@ -1160,11 +1706,11 @@ _Pengurus Green Bussan Village_`;
                 </span>
                 <span className="text-emerald-700 text-lg font-black">=</span>
                 <span className="bg-amber-300 text-amber-950 px-3 py-1 rounded-lg border border-amber-400 shadow-xs text-base sm:text-lg font-black">
-                  {formatRupiah(finalBalance)}
+                  {formatRupiah(narrativeData.finalAmount)}
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800/80 pt-1">
-                Saldo kas warga per 14 Agustus 2026 tersedia di rekening & kas operasional bendahara.
+                Saldo kas warga per {narrativeData.finalDate} tersimpan aman di kas operasional bendahara & rekening warga.
               </p>
             </div>
           </div>
@@ -1176,17 +1722,17 @@ _Pengurus Green Bussan Village_`;
         <div className="space-y-5">
           {/* Monthly Revenue Bar Cards */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-emerald-600" />
-                Ringkasan Penerimaan Iuran Per Bulan (Januari - Juli 2026)
+                Ringkasan Penerimaan Iuran Per Bulan (Januari - Agustus 2026)
               </h3>
               <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                Total Masuk: {formatRupiah(totalCollectedJanJul)}
+                Total Masuk: {formatRupiah(totalCollectedAll)}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 pt-1">
               {[
                 { label: 'Jan-26', val: monthlyTotals.jan, count: monthlyPaidHouseCounts.jan },
                 { label: 'Feb-26', val: monthlyTotals.feb, count: monthlyPaidHouseCounts.feb },
@@ -1195,10 +1741,11 @@ _Pengurus Green Bussan Village_`;
                 { label: 'Mei-26', val: monthlyTotals.may, count: monthlyPaidHouseCounts.may },
                 { label: 'Jun-26', val: monthlyTotals.jun, count: monthlyPaidHouseCounts.jun },
                 { label: 'Jul-26', val: monthlyTotals.jul, count: monthlyPaidHouseCounts.jul },
+                { label: 'Agu-26', val: monthlyTotals.aug, count: monthlyPaidHouseCounts.aug },
               ].map((m) => (
-                <div key={m.label} className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
+                <div key={m.label} className="bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center">
                   <p className="text-[11px] font-bold text-slate-600">{m.label}</p>
-                  <p className="text-xs sm:text-sm font-black text-emerald-700 mt-1">{formatRupiah(m.val)}</p>
+                  <p className="text-xs sm:text-sm font-black text-emerald-700 mt-0.5">{formatRupiah(m.val)}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">{m.count} / 43 Rumah</p>
                 </div>
               ))}
@@ -1275,13 +1822,14 @@ _Pengurus Green Bussan Village_`;
                     <th className="py-3 px-3 w-10 text-center">No</th>
                     <th className="py-3 px-3 whitespace-nowrap">Blok / Rumah</th>
                     <th className="py-3 px-3 text-right">Iuran/Bln</th>
-                    <th className="py-3 px-2.5 text-center">Jan-26</th>
-                    <th className="py-3 px-2.5 text-center">Feb-26</th>
-                    <th className="py-3 px-2.5 text-center">Mar-26</th>
-                    <th className="py-3 px-2.5 text-center">Apr-26</th>
-                    <th className="py-3 px-2.5 text-center">Mei-26</th>
-                    <th className="py-3 px-2.5 text-center">Jun-26</th>
-                    <th className="py-3 px-2.5 text-center">Jul-26</th>
+                    <th className="py-3 px-2 text-center">Jan-26</th>
+                    <th className="py-3 px-2 text-center">Feb-26</th>
+                    <th className="py-3 px-2 text-center">Mar-26</th>
+                    <th className="py-3 px-2 text-center">Apr-26</th>
+                    <th className="py-3 px-2 text-center">Mei-26</th>
+                    <th className="py-3 px-2 text-center">Jun-26</th>
+                    <th className="py-3 px-2 text-center">Jul-26</th>
+                    <th className="py-3 px-2 text-center bg-emerald-950 text-emerald-300">Agu-26</th>
                     <th className="py-3 px-3 text-right">Rekap Iuran</th>
                     <th className="py-3 px-3 text-right">Tunggakan</th>
                     <th className="py-3 px-4">Keterangan</th>
@@ -1297,11 +1845,12 @@ _Pengurus Green Bussan Village_`;
                     <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.may)}</td>
                     <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.jun)}</td>
                     <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.jul)}</td>
+                    <td className="py-2.5 px-2 text-center font-mono text-emerald-200">{formatRupiah(monthlyTotals.aug)}</td>
                     <td className="py-2.5 px-3 text-right font-mono font-black text-white">
-                      {formatRupiah(totalCollectedJanJul)}
+                      {formatRupiah(totalCollectedAll)}
                     </td>
                     <td className="py-2.5 px-3 text-right font-mono font-black text-rose-200">
-                      {formatRupiah(totalArrearsJanJul)}
+                      {formatRupiah(totalArrearsAll)}
                     </td>
                     <td className="py-2.5 px-4 text-emerald-200 text-[11px]">43 Unit Terdaftar</td>
                   </tr>
@@ -1326,10 +1875,10 @@ _Pengurus Green Bussan Village_`;
                       </td>
 
                       {/* Month Badges */}
-                      {(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul'] as const).map((m) => {
+                      {(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug'] as const).map((m) => {
                         const paid = row.payments[m];
                         return (
-                          <td key={m} className="py-2.5 px-2 text-center">
+                          <td key={m} className={`py-2.5 px-2 text-center ${m === 'aug' ? 'bg-emerald-50/40' : ''}`}>
                             {paid ? (
                               <span className="inline-block bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-mono font-bold text-[10px]" title={`Rp ${paid.toLocaleString('id-ID')}`}>
                                 100k
@@ -1399,7 +1948,7 @@ _Pengurus Green Bussan Village_`;
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Semua ({rtCash.length})
+                  Semua ({filteredCash.length})
                 </button>
                 <button
                   onClick={() => setTypeFilter('Pemasukan')}
@@ -1409,7 +1958,7 @@ _Pengurus Green Bussan Village_`;
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Pemasukan ({rtCash.filter((c) => c.type === 'Pemasukan').length})
+                  Pemasukan ({filteredCash.filter((c) => c.type === 'Pemasukan').length})
                 </button>
                 <button
                   onClick={() => setTypeFilter('Pengeluaran')}
@@ -1419,7 +1968,7 @@ _Pengurus Green Bussan Village_`;
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Pengeluaran ({rtCash.filter((c) => c.type === 'Pengeluaran').length})
+                  Pengeluaran ({filteredCash.filter((c) => c.type === 'Pengeluaran').length})
                 </button>
               </div>
             </div>
@@ -1445,19 +1994,27 @@ _Pengurus Green Bussan Village_`;
                   {/* Saldo Awal Row */}
                   <tr className="bg-slate-50/90 font-medium">
                     <td className="py-3.5 px-4 text-center text-slate-400 font-semibold">•</td>
-                    <td className="py-3.5 px-4 text-slate-800 whitespace-nowrap font-bold">{INITIAL_RT_CASH_DATE}</td>
+                    <td className="py-3.5 px-4 text-slate-800 whitespace-nowrap font-bold">{periodInitialDate}</td>
                     <td className="py-3.5 px-4">
                       <span className="font-semibold px-2 py-0.5 rounded-full text-[11px] bg-slate-200 text-slate-800 border border-slate-300">
                         Saldo Kas Awal
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <p className="font-bold text-slate-900">{INITIAL_RT_CASH_TITLE}</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">Saldo awal per 14 Juli 2026</p>
+                      <p className="font-bold text-slate-900">
+                        {selectedPeriod === 'period2'
+                          ? 'Saldo Kas Awal Periode 2 (Sisa Kas Periode 14 Juli - 14 Agustus 2026)'
+                          : selectedPeriod === 'period1'
+                          ? INITIAL_RT_CASH_TITLE
+                          : 'Saldo Kas Awal RT (14 Juli 2026)'}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Saldo per {periodInitialDate}
+                      </p>
                     </td>
                     <td className="py-3.5 px-4 text-slate-600">Bendahara Kas</td>
                     <td className="py-3.5 px-4 text-right font-mono text-slate-300">-</td>
-                    <td className="py-3.5 px-4 text-right font-mono text-slate-300">-</td>
+                    <td className="py-3.5 px-4 text-right font-mono text-emerald-700 font-bold">{formatRupiah(periodInitialBalance)}</td>
                     <td className="py-3.5 px-4 text-center text-slate-400 text-xs">Awal</td>
                   </tr>
 
@@ -1543,7 +2100,7 @@ _Pengurus Green Bussan Village_`;
                   </tr>
                   <tr className="bg-amber-100 font-black border-t border-amber-300 text-sm">
                     <td colSpan={5} className="py-4 px-4 text-right text-amber-950 font-black">
-                      SALDO KAS AKHIR (14 AGUSTUS 2026):
+                      SALDO KAS AKHIR ({periodEndDate.toUpperCase()}):
                     </td>
                     <td colSpan={2} className="py-4 px-4 text-right font-mono text-amber-950 text-base font-black">
                       {formatRupiah(finalBalance)}

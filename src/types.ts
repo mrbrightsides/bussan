@@ -344,6 +344,11 @@ export interface MonthlyFeeRecord {
     may?: number;
     jun?: number;
     jul?: number;
+    aug?: number;
+    sep?: number;
+    oct?: number;
+    nov?: number;
+    dec?: number;
   };
   totalPaid: number;
   arrears: number; // tunggakan
