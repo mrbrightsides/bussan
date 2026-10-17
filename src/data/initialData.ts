@@ -982,6 +982,11 @@ export const PERIOD_2_START_BALANCE = 9542000;
 export const PERIOD_2_START_DATE = '14 Agustus 2026';
 export const PERIOD_2_END_DATE = '14 September 2026';
 
+// Saldo Awal Periode 15 September - 17 Oktober 2026 (Periode 3)
+export const PERIOD_3_START_BALANCE = 6902500;
+export const PERIOD_3_START_DATE = '14 September 2026';
+export const PERIOD_3_END_DATE = '17 Oktober 2026';
+
 const initialRTCash: RTCashItem[] = [
   // --- PERIODE 1: 14 Juli - 14 Agustus 2026 ---
   {
@@ -1337,6 +1342,96 @@ const initialRTCash: RTCashItem[] = [
     pic: 'Bendahara Kas Warga',
     recordedBy: 'Bendahara Kas Warga',
     notes: 'Rekap penerimaan iuran bulanan warga Agustus 2026: Cash Rp 800.000 + Transfer Rp 2.200.000',
+  },
+
+  // --- PERIODE 3: 15 September - 17 Oktober 2026 ---
+  {
+    id: 'cash-17',
+    type: 'Pengeluaran',
+    title: 'Token Pos & Lampu Jalan',
+    category: 'Operasional Pos Security & Fasilitas Umum',
+    amount: 200000,
+    date: '23 September 2026',
+    pic: 'Pengurus Kas',
+    recordedBy: 'Pengurus Kas Warga',
+    notes: 'Pembelian token listrik pos security & lampu penerangan jalan',
+  },
+  {
+    id: 'cash-18',
+    type: 'Pengeluaran',
+    title: 'Wifi Pos Security',
+    category: 'Operasional Pos Security & Fasilitas Umum',
+    amount: 195000,
+    date: '30 September 2026',
+    pic: 'Pengurus Kas',
+    recordedBy: 'Pengurus Kas Warga',
+    notes: 'Pembayaran tagihan internet wifi bulanan pos security',
+  },
+  {
+    id: 'cash-19',
+    type: 'Pengeluaran',
+    title: 'Token Pos & Lampu Jalan',
+    category: 'Operasional Pos Security & Fasilitas Umum',
+    amount: 200000,
+    date: '04 Oktober 2026',
+    pic: 'Pengurus Kas',
+    recordedBy: 'Pengurus Kas Warga',
+    notes: 'Pembelian token listrik pos security & lampu jalan komplek',
+  },
+  {
+    id: 'cash-20',
+    type: 'Pengeluaran',
+    title: 'Pembayaran Gaji Security Malam (Periode September 2026)',
+    category: 'Gaji Petugas (Security)',
+    amount: 2000000,
+    date: '05 Oktober 2026',
+    pic: 'Bendahara Kas Warga',
+    recordedBy: 'Bendahara Kas Warga',
+    notes: 'Honor gaji satpam shift malam untuk periode September 2026',
+  },
+  {
+    id: 'cash-21a',
+    type: 'Pengeluaran',
+    title: 'Perawatan Lampu Jalan C1 & C8: Lampu 2 Bh (@ Rp 345.000)',
+    category: 'Lampu & Fasilitas',
+    amount: 690000,
+    date: '13 Oktober 2026',
+    pic: 'Seksi Lingkungan & Teknisi',
+    recordedBy: 'Pengurus Kas Warga',
+    notes: 'Pembelian 2 buah lampu jalan untuk lokasi C1 & C8 @ Rp 345.000',
+  },
+  {
+    id: 'cash-21b',
+    type: 'Pengeluaran',
+    title: 'Perawatan Lampu Jalan C1 & C8: Jasa Pasang 2 Titik (@ Rp 100.000)',
+    category: 'Lampu & Fasilitas',
+    amount: 200000,
+    date: '13 Oktober 2026',
+    pic: 'Teknisi / Pengurus',
+    recordedBy: 'Pengurus Kas Warga',
+    notes: 'Upah jasa pasang teknisi 2 titik instalasi lampu jalan C1 & C8 @ Rp 100.000',
+  },
+  {
+    id: 'cash-22',
+    type: 'Pengeluaran',
+    title: 'Token Pos & Lampu Jalan',
+    category: 'Operasional Pos Security & Fasilitas Umum',
+    amount: 200000,
+    date: '16 Oktober 2026',
+    pic: 'Pengurus Kas',
+    recordedBy: 'Pengurus Kas Warga',
+    notes: 'Pembelian token listrik pos security & lampu penerangan jalan komplek',
+  },
+  {
+    id: 'cash-23',
+    type: 'Pemasukan',
+    title: 'Rekap Iuran Masuk Warga',
+    category: 'Iuran Bulanan Warga',
+    amount: 3700000,
+    date: '17 Oktober 2026',
+    pic: 'Bendahara Kas Warga',
+    recordedBy: 'Bendahara Kas Warga',
+    notes: 'Rekap penerimaan iuran masuk warga: Cash Rp 900.000 + Transfer Bank Rp 2.800.000',
   },
 ];
 
