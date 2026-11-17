@@ -353,6 +353,7 @@ export interface MonthlyFeeRecord {
   totalPaid: number;
   arrears: number; // tunggakan
   notes?: string; // e.g. "Start April", "Kosong Sejak Februari", "Kantor Developer tidak pernah bayar"
+  excludedMonths?: ('jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec')[];
 }
 
 export interface AppState {

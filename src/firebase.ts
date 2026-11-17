@@ -45,20 +45,20 @@ export function subscribeToAppState(
           const inventoryItems = Array.isArray(data.inventoryItems) ? data.inventoryItems : [];
           const marketplace = Array.isArray(data.marketplace) ? data.marketplace : [];
 
-          // Check if rtCash needs migration/syncing to the official RT 22 transaction records (Periode 3: 15 Sep - 17 Okt 2026)
+          // Check if rtCash needs migration/syncing to the official RT 22 transaction records (Periode 4: 18 Okt - 16 Nov 2026)
           const needsRTCashSync =
             !data.rtCashVersion ||
-            data.rtCashVersion < 6 ||
+            data.rtCashVersion < 7 ||
             !Array.isArray(data.rtCash) ||
             data.rtCash.length === 0 ||
-            !data.rtCash.some((item: any) => item.id === 'cash-23');
+            !data.rtCash.some((item: any) => item.id === 'cash-29');
 
-          // Check if monthly fees need syncing to include August 2026 data
+          // Check if monthly fees need syncing to include September & October 2026 data
           const needsMonthlyFeesSync =
             !data.monthlyFeesVersion ||
-            data.monthlyFeesVersion < 3 ||
+            data.monthlyFeesVersion < 4 ||
             !Array.isArray(data.monthlyFees) ||
-            !data.monthlyFees.some((h: any) => h.payments?.aug);
+            !data.monthlyFees.some((h: any) => h.payments?.oct);
 
           const rtCash = needsRTCashSync ? initialAppData.rtCash || [] : data.rtCash;
           const monthlyFees = needsMonthlyFeesSync
@@ -118,8 +118,8 @@ export async function saveAppStateToFirestore(state: AppState) {
     const cleanState = cleanForFirestore(state);
     await setDoc(STATE_DOC_REF, {
       ...cleanState,
-      rtCashVersion: 6,
-      monthlyFeesVersion: 3,
+      rtCashVersion: 7,
+      monthlyFeesVersion: 4,
       cleanPortalDataVersion: 5,
       updatedAt: new Date().toISOString(),
     });

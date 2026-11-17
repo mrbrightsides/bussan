@@ -47,10 +47,13 @@ import {
   PERIOD_3_START_BALANCE,
   PERIOD_3_START_DATE,
   PERIOD_3_END_DATE,
+  PERIOD_4_START_BALANCE,
+  PERIOD_4_START_DATE,
+  PERIOD_4_END_DATE,
 } from '../data/initialData';
 import { formatRupiah } from '../utils/mediaUtils';
 
-export type RTCashPeriod = 'period3' | 'period2' | 'period1' | 'all';
+export type RTCashPeriod = 'period4' | 'period3' | 'period2' | 'period1' | 'all';
 
 interface RTCashViewProps {
   rtCash: RTCashItem[];
@@ -68,7 +71,7 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
   onResetOfficialRTCash,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'narrative' | 'transactions' | 'matrix'>('narrative');
-  const [selectedPeriod, setSelectedPeriod] = useState<RTCashPeriod>('period3');
+  const [selectedPeriod, setSelectedPeriod] = useState<RTCashPeriod>('period4');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Pemasukan' | 'Pengeluaran'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [blockFilter, setBlockFilter] = useState<string>('all');
@@ -112,7 +115,7 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
       isOpen: true,
       title: 'Sinkronisasi Data Kas Resmi',
       message:
-        'Apakah Anda ingin menyinkronkan dan memuat ulang data resmi Buku Kas & Matriks Iuran Warga s/d Periode 3 (15 September - 17 Oktober 2026, Saldo Kas Terkini: Rp 6.917.500)?',
+        'Apakah Anda ingin menyinkronkan dan memuat ulang data resmi Buku Kas & Matriks Iuran Warga s/d Periode 4 (18 Oktober - 16 November 2026, Saldo Kas Terkini: Rp 6.922.500) & Matriks Iuran Jan - Okt 2026?',
       confirmButtonText: 'Sinkronkan Sekarang',
       isBulkAction: false,
       onConfirm: () => {
@@ -121,8 +124,29 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     });
   };
 
-  // Helper to distinguish Period 3 (15 Sep - 17 Okt 2026), Period 2 (15 Aug - 14 Sep 2026), and Period 1 (14 Jul - 14 Aug 2026)
+  // Helper to distinguish Period 4 (18 Okt - 16 Nov 2026), Period 3 (15 Sep - 17 Okt 2026), Period 2 (15 Aug - 14 Sep 2026), and Period 1 (14 Jul - 14 Aug 2026)
+  const isPeriod4Item = (item: RTCashItem) => {
+    if (
+      item.id.startsWith('cash-24') ||
+      item.id.startsWith('cash-25') ||
+      item.id.startsWith('cash-26') ||
+      item.id.startsWith('cash-27') ||
+      item.id.startsWith('cash-28') ||
+      item.id.startsWith('cash-29')
+    ) {
+      return true;
+    }
+    const dLower = item.date.toLowerCase();
+    if (dLower.includes('november') || dLower.includes('nov')) return true;
+    if (dLower.includes('oktober') || dLower.includes('oct')) {
+      const match = item.date.match(/(\d+)/);
+      if (match && parseInt(match[1], 10) >= 18) return true;
+    }
+    return false;
+  };
+
   const isPeriod3Item = (item: RTCashItem) => {
+    if (isPeriod4Item(item)) return false;
     if (
       item.id.startsWith('cash-17') ||
       item.id.startsWith('cash-18') ||
@@ -135,7 +159,10 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
       return true;
     }
     const dLower = item.date.toLowerCase();
-    if (dLower.includes('oktober') || dLower.includes('oct')) return true;
+    if (dLower.includes('oktober') || dLower.includes('oct')) {
+      const match = item.date.match(/(\d+)/);
+      if (!match || parseInt(match[1], 10) < 18) return true;
+    }
     if (dLower.includes('september') || dLower.includes('sep')) {
       const match = item.date.match(/(\d+)/);
       if (match && parseInt(match[1], 10) >= 15) return true;
@@ -144,7 +171,7 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
   };
 
   const isPeriod2Item = (item: RTCashItem) => {
-    if (isPeriod3Item(item)) return false;
+    if (isPeriod4Item(item) || isPeriod3Item(item)) return false;
     if (
       item.id.startsWith('cash-9') ||
       item.id.startsWith('cash-10') ||
@@ -170,46 +197,57 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
   };
 
   const isPeriod1Item = (item: RTCashItem) => {
-    return !isPeriod3Item(item) && !isPeriod2Item(item);
+    return !isPeriod4Item(item) && !isPeriod3Item(item) && !isPeriod2Item(item);
   };
 
   // Cash items belonging to the selected period
   const periodItems = rtCash.filter((item) => {
     if (selectedPeriod === 'all') return true;
+    if (selectedPeriod === 'period4') return isPeriod4Item(item);
     if (selectedPeriod === 'period3') return isPeriod3Item(item);
     if (selectedPeriod === 'period2') return isPeriod2Item(item);
     return isPeriod1Item(item);
   });
 
   const periodInitialBalance =
-    selectedPeriod === 'period3'
+    selectedPeriod === 'period4'
+      ? PERIOD_4_START_BALANCE
+      : selectedPeriod === 'period3'
       ? PERIOD_3_START_BALANCE
       : selectedPeriod === 'period2'
       ? PERIOD_2_START_BALANCE
       : INITIAL_RT_CASH_BALANCE;
 
   const periodInitialDate =
-    selectedPeriod === 'period3'
+    selectedPeriod === 'period4'
+      ? PERIOD_4_START_DATE
+      : selectedPeriod === 'period3'
       ? PERIOD_3_START_DATE
       : selectedPeriod === 'period2'
       ? PERIOD_2_START_DATE
       : INITIAL_RT_CASH_DATE;
 
   const periodEndDate =
-    selectedPeriod === 'period3'
+    selectedPeriod === 'period4'
+      ? PERIOD_4_END_DATE
+      : selectedPeriod === 'period3'
       ? PERIOD_3_END_DATE
       : selectedPeriod === 'period2'
       ? PERIOD_2_END_DATE
-      : '14 Agustus 2026';
+      : selectedPeriod === 'period1'
+      ? '14 Agustus 2026'
+      : PERIOD_4_END_DATE;
 
   const periodLabel =
-    selectedPeriod === 'period3'
+    selectedPeriod === 'period4'
+      ? '18 Oktober 2026 – 16 November 2026'
+      : selectedPeriod === 'period3'
       ? '15 September 2026 – 17 Oktober 2026'
       : selectedPeriod === 'period2'
       ? '15 Agustus 2026 – 14 September 2026'
       : selectedPeriod === 'period1'
       ? '14 Juli 2026 – 14 Agustus 2026'
-      : 'Akumulatif (14 Juli 2026 – 17 Oktober 2026)';
+      : 'Akumulatif (14 Juli 2026 – 16 November 2026)';
 
   const totalIncome = periodItems
     .filter((c) => c.type === 'Pemasukan')
@@ -220,6 +258,28 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     .reduce((sum, c) => sum + c.amount, 0);
 
   const finalBalance = periodInitialBalance + totalIncome - totalExpense;
+
+  // Specific breakdown for Period 4 (18 Okt - 16 Nov 2026)
+  const period4Items = rtCash.filter(isPeriod4Item);
+  const expenseOperasionalPosPeriod4 = period4Items
+    .filter(
+      (c) =>
+        c.type === 'Pengeluaran' &&
+        (c.category.includes('Operasional') ||
+          c.category.includes('Wifi') ||
+          c.category.includes('Token') ||
+          c.title.toLowerCase().includes('token') ||
+          c.title.toLowerCase().includes('wifi'))
+    )
+    .reduce((sum, c) => sum + c.amount, 0); // Rp 795.000
+
+  const expenseGajiPeriod4 = period4Items
+    .filter(
+      (c) =>
+        c.type === 'Pengeluaran' &&
+        (c.category.includes('Gaji') || c.title.toLowerCase().includes('gaji'))
+    )
+    .reduce((sum, c) => sum + c.amount, 0); // Rp 2.000.000
 
   // Specific breakdown for Period 3 (15 Sep - 17 Okt 2026)
   const period3Items = rtCash.filter(isPeriod3Item);
@@ -297,10 +357,10 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     .filter((c) => c.type === 'Pengeluaran' && (c.category.includes('Taman') || c.id.startsWith('cash-7')))
     .reduce((sum, c) => sum + c.amount, 0); // Rp 538.000
 
-  // Monthly Matrix Calculations (January to August 2026)
+  // Monthly Matrix Calculations (January to October 2026)
   const totalHouses = monthlyFees.length; // 43
-  const totalCollectedAll = monthlyFees.reduce((sum, h) => sum + h.totalPaid, 0); // Rp 27.100.000
-  const totalArrearsAll = monthlyFees.reduce((sum, h) => sum + h.arrears, 0); // Rp 6.700.000
+  const totalCollectedAll = monthlyFees.reduce((sum, h) => sum + h.totalPaid, 0); // Rp 33.800.000
+  const totalArrearsAll = monthlyFees.reduce((sum, h) => sum + h.arrears, 0); // Rp 8.400.000
   const fullyPaidCount = monthlyFees.filter((h) => h.arrears === 0).length;
   const arrearsCount = monthlyFees.filter((h) => h.arrears > 0).length;
 
@@ -313,6 +373,8 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     jun: monthlyFees.reduce((sum, h) => sum + (h.payments.jun || 0), 0),
     jul: monthlyFees.reduce((sum, h) => sum + (h.payments.jul || 0), 0),
     aug: monthlyFees.reduce((sum, h) => sum + (h.payments.aug || 0), 0),
+    sep: monthlyFees.reduce((sum, h) => sum + (h.payments.sep || 0), 0),
+    oct: monthlyFees.reduce((sum, h) => sum + (h.payments.oct || 0), 0),
   };
 
   const monthlyPaidHouseCounts = {
@@ -324,6 +386,8 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
     jun: monthlyFees.filter((h) => !!h.payments.jun).length,
     jul: monthlyFees.filter((h) => !!h.payments.jul).length,
     aug: monthlyFees.filter((h) => !!h.payments.aug).length,
+    sep: monthlyFees.filter((h) => !!h.payments.sep).length,
+    oct: monthlyFees.filter((h) => !!h.payments.oct).length,
   };
 
   // Filtered Monthly Fees
@@ -359,7 +423,72 @@ export const RTCashView: React.FC<RTCashViewProps> = ({
 
   // Get structured narrative data based on active period
   const getNarrativeData = () => {
-    if (selectedPeriod === 'period3') {
+    if (selectedPeriod === 'period4') {
+      return {
+        titlePeriod: 'Periode: 18 Oktober 2026 – 16 November 2026',
+        subtitle: 'RT 22 • Periode: 18 Oktober 2026 – 16 November 2026',
+        initLabel: 'Saldo Awal (18 Oktober 2026)',
+        initDate: '18 Oktober 2026',
+        initAmount: PERIOD_4_START_BALANCE,
+        finalLabel: 'Saldo Akhir (16 November 2026)',
+        finalDate: '16 November 2026',
+        finalAmount: finalBalance,
+        datePlace: 'Palembang, 16 November 2026',
+        incomeDesc: `• Rekap Iuran Masuk Warga Periode 18 Oktober – 16 November 2026 sebesar ${formatRupiah(totalIncome)} (Cash: Rp 900.000 + Transfer Bank: Rp 1.900.000).`,
+        expenseHtml: `
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>a. Operasional Pos Security & Fasilitas Umum</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseOperasionalPosPeriod4)}</span>
+            </div>
+            <ul>
+              <li><strong>27 Oktober:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+              <li><strong>30 Oktober:</strong> Pembayaran Wifi Pos Security (Rp 195.000)</li>
+              <li><strong>07 November:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+              <li><strong>14 November:</strong> Pembelian Token Pos & Lampu Jalan (Rp 200.000)</li>
+            </ul>
+          </div>
+
+          <div class="pos-box">
+            <div class="pos-header">
+              <span>b. Gaji Petugas Security</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseGajiPeriod4)}</span>
+            </div>
+            <ul>
+              <li><strong>05 November:</strong> Pembayaran Gaji Security Malam periode Oktober 2026 (Rp 2.000.000)</li>
+            </ul>
+          </div>
+        `,
+        textWa: `*Laporan Rekapitulasi Kas Green Bussan Village*
+*(Periode: 18 Oktober 2026 – 16 November 2026)*
+
+*1. Ringkasan Kas*
+• Saldo Awal (18 Oktober 2026): ${formatRupiah(PERIOD_4_START_BALANCE)}
+• Total Pemasukan (Duit Masuk): ${formatRupiah(totalIncome)}
+• Total Pengeluaran (Duit Keluar): ${formatRupiah(totalExpense)}
+• *Saldo Akhir (16 November 2026): ${formatRupiah(finalBalance)}*
+
+*2. Rincian Pemasukan (Duit Masuk)*
+• Rekap Iuran Masuk Warga sebesar ${formatRupiah(totalIncome)} (Cash: Rp 900.000 + Transfer Bank: Rp 1.900.000).
+
+*3. Rincian Pengeluaran (Duit Keluar)*
+Total pengeluaran sebesar ${formatRupiah(totalExpense)} dialokasikan untuk operasional dan fasilitas lingkungan:
+
+*a. Operasional Pos Security & Fasilitas Umum (${formatRupiah(expenseOperasionalPosPeriod4)})*
+• 27 Oktober: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
+• 30 Oktober: Pembayaran Wifi Pos Security (${formatRupiah(195000)})
+• 07 November: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
+• 14 November: Pembelian Token Pos & Lampu Jalan (${formatRupiah(200000)})
+
+*b. Gaji Petugas (${formatRupiah(expenseGajiPeriod4)})*
+• 05 November: Pembayaran Gaji Security Malam periode Oktober 2026 (${formatRupiah(2000000)})
+
+*Perhitungan Saldo Akhir:*
+${formatRupiah(PERIOD_4_START_BALANCE)} (Saldo Awal) + ${formatRupiah(totalIncome)} (Pemasukan) - ${formatRupiah(totalExpense)} (Pengeluaran) = *${formatRupiah(finalBalance)}*
+
+_Pengurus Green Bussan Village_`,
+      };
+    } else if (selectedPeriod === 'period3') {
       return {
         titlePeriod: 'Periode: 15 September 2026 – 17 Oktober 2026',
         subtitle: 'RT 22 • Periode: 15 September 2026 – 17 Oktober 2026',
@@ -654,28 +783,28 @@ _Pengurus Green Bussan Village_`,
       };
     } else {
       return {
-        titlePeriod: 'Akumulatif (14 Juli 2026 – 17 Oktober 2026)',
-        subtitle: 'RT 22 • Rekap Kas Akumulatif (14 Juli – 17 Oktober 2026)',
+        titlePeriod: 'Akumulatif (14 Juli 2026 – 16 November 2026)',
+        subtitle: 'RT 22 • Rekap Kas Akumulatif (14 Juli – 16 November 2026)',
         initLabel: 'Saldo Awal (14 Juli 2026)',
         initDate: '14 Juli 2026',
         initAmount: INITIAL_RT_CASH_BALANCE,
-        finalLabel: 'Saldo Kas Terkini (17 Oktober 2026)',
-        finalDate: '17 Oktober 2026',
+        finalLabel: 'Saldo Kas Terkini (16 November 2026)',
+        finalDate: '16 November 2026',
         finalAmount: finalBalance,
-        datePlace: 'Palembang, 17 Oktober 2026',
-        incomeDesc: `• Total Penerimaan Iuran Warga Periode Juli (Rp 3.100.000), Periode Agustus (Rp 3.000.000), dan Periode September-Oktober (Rp 3.700.000) sebesar ${formatRupiah(totalIncome)}.`,
+        datePlace: 'Palembang, 16 November 2026',
+        incomeDesc: `• Total Penerimaan Iuran Warga Periode 1 (Rp 3.100.000), Periode 2 (Rp 3.000.000), Periode 3 (Rp 3.700.000), dan Periode 4 (Rp 2.800.000) sebesar ${formatRupiah(totalIncome)}.`,
         expenseHtml: `
           <div class="pos-box">
             <div class="pos-header">
-              <span>a. Total Operasional Pos Security & Fasilitas</span>
-              <span style="color: #e11d48;">${formatRupiah(expenseOperasionalPosPeriod1 + expenseOperasionalPosPeriod2 + expenseOperasionalPosPeriod3)}</span>
+              <span>a. Total Operasional Pos Security & Fasilitas (4 Periode)</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseOperasionalPosPeriod1 + expenseOperasionalPosPeriod2 + expenseOperasionalPosPeriod3 + expenseOperasionalPosPeriod4)}</span>
             </div>
             <p style="font-size: 11px; margin: 0; color: #475569;">Token listrik, wifi bulanan, dan perawatan instalasi pos security.</p>
           </div>
           <div class="pos-box">
             <div class="pos-header">
-              <span>b. Total Gaji Petugas Security (3 Bulan: Juli, Agustus, September)</span>
-              <span style="color: #e11d48;">${formatRupiah(expenseGajiPeriod1 + expenseGajiPeriod2 + expenseGajiPeriod3)}</span>
+              <span>b. Total Gaji Petugas Security (4 Bulan: Juli, Agustus, September, Oktober)</span>
+              <span style="color: #e11d48;">${formatRupiah(expenseGajiPeriod1 + expenseGajiPeriod2 + expenseGajiPeriod3 + expenseGajiPeriod4)}</span>
             </div>
             <p style="font-size: 11px; margin: 0; color: #475569;">Honor security malam per bulan @ Rp 2.000.000.</p>
           </div>
@@ -695,13 +824,13 @@ _Pengurus Green Bussan Village_`,
           </div>
         `,
         textWa: `*Laporan Rekapitulasi Kas Akumulatif Green Bussan Village*
-*(Periode: 14 Juli 2026 – 17 Oktober 2026)*
+*(Periode: 14 Juli 2026 – 16 November 2026)*
 
 *1. Ringkasan Kas*
 • Saldo Awal (14 Juli 2026): ${formatRupiah(INITIAL_RT_CASH_BALANCE)}
 • Total Pemasukan: ${formatRupiah(totalIncome)}
 • Total Pengeluaran: ${formatRupiah(totalExpense)}
-• *Saldo Kas Terkini (17 Oktober 2026): ${formatRupiah(finalBalance)}*
+• *Saldo Kas Terkini (16 November 2026): ${formatRupiah(finalBalance)}*
 
 *Perhitungan:*
 ${formatRupiah(INITIAL_RT_CASH_BALANCE)} + ${formatRupiah(totalIncome)} - ${formatRupiah(totalExpense)} = *${formatRupiah(finalBalance)}*
@@ -866,7 +995,8 @@ _Pengurus Green Bussan Village_`,
           .text-right { text-align: right; }
           .text-center { text-align: center; }
           .paid { color: #059669; font-weight: 600; }
-          .unpaid { color: #94a3b8; }
+          .unpaid { color: #e11d48; background: #fff1f2; font-weight: 600; }
+          .excluded { color: #94a3b8; background: #1e293b; font-weight: 600; }
           .arrears { color: #e11d48; font-weight: bold; }
           .total-row { background: #f1f5f9; font-weight: bold; }
           .signature-area { margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; }
@@ -879,7 +1009,7 @@ _Pengurus Green Bussan Village_`,
       <body>
         <div class="header">
           <h1 class="title">IURAN BULANAN PERUMAHAN GREEN BUSSAN VILLAGE</h1>
-          <p class="subtitle">Rekap Matriks Pembayaran Warga Green Bussan Village Periode Januari – Agustus 2026</p>
+          <p class="subtitle">Rekap Matriks Pembayaran Warga Green Bussan Village Periode Januari – Oktober 2026</p>
           <p class="subtitle">Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
 
@@ -889,7 +1019,7 @@ _Pengurus Green Bussan Village_`,
             <div class="card-val" style="color: #0f766e;">43 Unit / KK</div>
           </div>
           <div class="summary-card">
-            <div class="card-lbl">Total Iuran Terkumpul (Jan - Agu)</div>
+            <div class="card-lbl">Total Iuran Terkumpul (Jan - Okt)</div>
             <div class="card-val" style="color: #059669;">${formatRupiah(totalCollectedAll)}</div>
           </div>
           <div class="summary-card">
@@ -916,6 +1046,8 @@ _Pengurus Green Bussan Village_`,
               <th>Jun-26</th>
               <th>Jul-26</th>
               <th>Agu-26</th>
+              <th>Sep-26</th>
+              <th>Okt-26</th>
               <th style="width: 75px;">Rekap Iuran</th>
               <th style="width: 70px;">Tunggakan</th>
             </tr>
@@ -923,23 +1055,32 @@ _Pengurus Green Bussan Village_`,
           <tbody>
             ${monthlyFees
               .map(
-                (row) => `
+                (row) => {
+                  const renderPrintCell = (m: keyof MonthlyFeeRecord['payments']) => {
+                    if (row.payments[m]) return `<td class="paid">100k</td>`;
+                    if (row.excludedMonths?.includes(m)) return `<td class="excluded">-</td>`;
+                    return `<td class="unpaid">-</td>`;
+                  };
+                  return `
               <tr>
                 <td>${row.no}</td>
                 <td style="font-weight: bold;">${row.blockHouse}</td>
                 <td>${formatRupiah(row.monthlyFee)}</td>
-                <td class="${row.payments.jan ? 'paid' : 'unpaid'}">${row.payments.jan ? '100k' : '-'}</td>
-                <td class="${row.payments.feb ? 'paid' : 'unpaid'}">${row.payments.feb ? '100k' : '-'}</td>
-                <td class="${row.payments.mar ? 'paid' : 'unpaid'}">${row.payments.mar ? '100k' : '-'}</td>
-                <td class="${row.payments.apr ? 'paid' : 'unpaid'}">${row.payments.apr ? '100k' : '-'}</td>
-                <td class="${row.payments.may ? 'paid' : 'unpaid'}">${row.payments.may ? '100k' : '-'}</td>
-                <td class="${row.payments.jun ? 'paid' : 'unpaid'}">${row.payments.jun ? '100k' : '-'}</td>
-                <td class="${row.payments.jul ? 'paid' : 'unpaid'}">${row.payments.jul ? '100k' : '-'}</td>
-                <td class="${row.payments.aug ? 'paid' : 'unpaid'}">${row.payments.aug ? '100k' : '-'}</td>
+                ${renderPrintCell('jan')}
+                ${renderPrintCell('feb')}
+                ${renderPrintCell('mar')}
+                ${renderPrintCell('apr')}
+                ${renderPrintCell('may')}
+                ${renderPrintCell('jun')}
+                ${renderPrintCell('jul')}
+                ${renderPrintCell('aug')}
+                ${renderPrintCell('sep')}
+                ${renderPrintCell('oct')}
                 <td class="text-right paid">${formatRupiah(row.totalPaid)}</td>
                 <td class="text-right ${row.arrears > 0 ? 'arrears' : ''}">${row.arrears > 0 ? formatRupiah(row.arrears) : '-'}</td>
               </tr>
-            `
+            `;
+                }
               )
               .join('')}
             <tr class="total-row">
@@ -952,6 +1093,8 @@ _Pengurus Green Bussan Village_`,
               <td>${formatRupiah(monthlyTotals.jun)}</td>
               <td>${formatRupiah(monthlyTotals.jul)}</td>
               <td>${formatRupiah(monthlyTotals.aug)}</td>
+              <td>${formatRupiah(monthlyTotals.sep)}</td>
+              <td>${formatRupiah(monthlyTotals.oct)}</td>
               <td class="text-right paid">${formatRupiah(totalCollectedAll)}</td>
               <td class="text-right arrears">${formatRupiah(totalArrearsAll)}</td>
             </tr>
@@ -1064,7 +1207,7 @@ _Pengurus Green Bussan Village_`,
             <!-- Saldo Awal -->
             <tr style="background: #f8fafc; font-weight: bold;">
               <td>${periodInitialDate}</td>
-              <td>${selectedPeriod === 'period3' ? 'Saldo Kas Awal Periode 3 (Rekap Periode 15 Agustus - 14 September 2026)' : selectedPeriod === 'period2' ? 'Saldo Kas Awal Periode 2 (Rekap Periode 14 Juli - 14 Agustus 2026)' : INITIAL_RT_CASH_TITLE}</td>
+              <td>${selectedPeriod === 'period4' ? 'Saldo Kas Awal Periode 4 (Rekap Periode 15 September - 17 Oktober 2026)' : selectedPeriod === 'period3' ? 'Saldo Kas Awal Periode 3 (Rekap Periode 15 Agustus - 14 September 2026)' : selectedPeriod === 'period2' ? 'Saldo Kas Awal Periode 2 (Rekap Periode 14 Juli - 14 Agustus 2026)' : INITIAL_RT_CASH_TITLE}</td>
               <td class="text-right">-</td>
               <td class="text-right">-</td>
               <td class="text-right saldo">${formatRupiah(periodInitialBalance)}</td>
@@ -1151,13 +1294,23 @@ _Pengurus Green Bussan Village_`,
               Buku Kas & Iuran Warga
             </h1>
             <p className="text-emerald-100/90 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Laporan Rekapitulasi Kas RT 22 s/d Periode 3 (15 September – 17 Oktober 2026) dan pencatatan iuran bulanan 43 rumah (@Rp 100.000/bulan) perumahan Green Bussan Village.
+              Laporan Rekapitulasi Kas RT 22 s/d Periode 4 (18 Oktober – 16 November 2026) dan pencatatan iuran bulanan 43 rumah (@Rp 100.000/bulan) perumahan Green Bussan Village.
             </p>
 
             {/* Period Selector in Banner */}
             <div className="pt-2 flex flex-wrap items-center gap-2">
               <span className="text-xs text-emerald-300/90 font-medium">Pilih Periode:</span>
-              <div className="inline-flex bg-black/30 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs">
+              <div className="inline-flex flex-wrap bg-black/30 backdrop-blur-md p-1 rounded-xl border border-white/10 text-xs gap-1">
+                <button
+                  onClick={() => setSelectedPeriod('period4')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                    selectedPeriod === 'period4'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-emerald-200 hover:text-white'
+                  }`}
+                >
+                  Periode 4 (18 Okt – 16 Nov 2026) ★ Terkini
+                </button>
                 <button
                   onClick={() => setSelectedPeriod('period3')}
                   className={`px-3 py-1 rounded-lg font-bold transition-all ${
@@ -1166,7 +1319,7 @@ _Pengurus Green Bussan Village_`,
                       : 'text-emerald-200 hover:text-white'
                   }`}
                 >
-                  Periode 3 (15 Sep – 17 Okt 2026) ★ Terkini
+                  Periode 3 (15 Sep – 17 Okt 2026)
                 </button>
                 <button
                   onClick={() => setSelectedPeriod('period2')}
@@ -1301,7 +1454,9 @@ _Pengurus Green Bussan Village_`,
             <div className="mt-2">
               <p className="text-xl sm:text-2xl font-black text-teal-200">{formatRupiah(totalIncome)}</p>
               <p className="text-[10px] text-teal-300/80 mt-0.5">
-                {selectedPeriod === 'period3'
+                {selectedPeriod === 'period4'
+                  ? 'Iuran Masuk 18 Okt–16 Nov'
+                  : selectedPeriod === 'period3'
                   ? 'Iuran Masuk 17-Okt'
                   : selectedPeriod === 'period2'
                   ? 'Iuran Masuk 13-Sep'
@@ -1322,7 +1477,9 @@ _Pengurus Green Bussan Village_`,
             <div className="mt-2">
               <p className="text-xl sm:text-2xl font-black text-rose-300">{formatRupiah(totalExpense)}</p>
               <p className="text-[10px] text-rose-300/80 mt-0.5">
-                {selectedPeriod === 'period3'
+                {selectedPeriod === 'period4'
+                  ? 'Pos Security & Gaji Okt'
+                  : selectedPeriod === 'period3'
                   ? 'Pos, Gaji & Lampu C1-C8'
                   : selectedPeriod === 'period2'
                   ? 'Pos, Gaji, Lampu & 17an'
@@ -1378,7 +1535,7 @@ _Pengurus Green Bussan Village_`,
             }`}
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            Matriks Iuran 43 Rumah (Jan - Agu)
+            Matriks Iuran 43 Rumah (Jan - Okt)
           </button>
         </div>
 
@@ -1479,7 +1636,9 @@ _Pengurus Green Bussan Village_`,
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-200 text-emerald-900">
-                      {selectedPeriod === 'period3'
+                      {selectedPeriod === 'period4'
+                        ? '18 Okt – 16 Nov'
+                        : selectedPeriod === 'period3'
                         ? '17 Oktober'
                         : selectedPeriod === 'period2'
                         ? '13 September'
@@ -1495,13 +1654,15 @@ _Pengurus Green Bussan Village_`,
                     {formatRupiah(totalIncome)}
                   </p>
                   <p className="text-xs text-slate-600">
-                    {selectedPeriod === 'period3'
+                    {selectedPeriod === 'period4'
+                      ? 'Penerimaan iuran warga periode 18 Oktober – 16 November 2026: Cash sebesar Rp 900.000 + Transfer Bank sebesar Rp 1.900.000 (Total Rp 2.800.000).'
+                      : selectedPeriod === 'period3'
                       ? 'Penerimaan iuran warga per 17 Oktober 2026: Cash sebesar Rp 900.000 + Transfer Bank sebesar Rp 2.800.000 (Total Rp 3.700.000).'
                       : selectedPeriod === 'period2' 
                       ? 'Penerimaan iuran warga per 13 September 2026: Cash sebesar Rp 800.000 + Transfer Bank sebesar Rp 2.200.000.'
                       : selectedPeriod === 'period1'
                       ? 'Penerimaan total rekapitulasi iuran bulanan 31 KK perumahan Green Bussan Village periode Juli 2026.'
-                      : 'Penerimaan total akumulatif iuran warga Green Bussan Village periode Juli, Agustus, dan September-Oktober 2026.'}
+                      : 'Penerimaan total akumulatif iuran warga Green Bussan Village Periode 1 s/d Periode 4 (Juli – November 2026).'}
                   </p>
                 </div>
               </div>
@@ -1528,7 +1689,90 @@ _Pengurus Green Bussan Village_`,
               </p>
 
               {/* Dynamic Clusters of Expense based on selectedPeriod */}
-              {selectedPeriod === 'period3' ? (
+              {selectedPeriod === 'period4' ? (
+                <div className="space-y-4">
+                  {/* Cluster A: Operasional Pos Security & Fasilitas Umum */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            a. Operasional Pos Security & Fasilitas Umum
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Token listrik pos & lampu jalan, wifi pos security</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseOperasionalPosPeriod4)}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700 divide-y divide-slate-100">
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>27 Oktober:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>30 Oktober:</strong> Pembayaran Wifi Pos Security</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(195000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>07 November:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                      <li className="pt-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>14 November:</strong> Pembelian Token Pos & Lampu Jalan</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(200000)}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Cluster B: Gaji Petugas Security */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                          <UserCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            b. Gaji Petugas Security
+                          </h4>
+                          <p className="text-[11px] text-slate-500">Honor gaji petugas keamanan malam komplek</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-black text-rose-700 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                        {formatRupiah(expenseGajiPeriod4)}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+                      <li className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          <span><strong>05 November:</strong> Pembayaran Gaji Security Malam periode Oktober 2026</span>
+                        </div>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(2000000)}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ) : selectedPeriod === 'period3' ? (
                 <div className="space-y-4">
                   {/* Cluster A: Operasional Pos Security & Fasilitas Umum */}
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
@@ -1967,24 +2211,24 @@ _Pengurus Green Bussan Village_`,
                 <div className="space-y-3">
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
                     <div>
-                      <p className="font-bold text-slate-900 text-sm">a. Total Operasional Pos & Fasilitas (2 Periode)</p>
+                      <p className="font-bold text-slate-900 text-sm">a. Total Operasional Pos & Fasilitas (4 Periode)</p>
                       <p className="text-xs text-slate-500">Token listrik, wifi bulanan & perbaikan fasilitas</p>
                     </div>
-                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseOperasionalPosPeriod1 + expenseOperasionalPosPeriod2)}</span>
+                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseOperasionalPosPeriod1 + expenseOperasionalPosPeriod2 + expenseOperasionalPosPeriod3 + expenseOperasionalPosPeriod4)}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
                     <div>
-                      <p className="font-bold text-slate-900 text-sm">b. Total Gaji Petugas Security (2 Bulan)</p>
-                      <p className="text-xs text-slate-500">Honor gaji petugas security malam</p>
+                      <p className="font-bold text-slate-900 text-sm">b. Total Gaji Petugas Security (4 Bulan: Jul – Okt)</p>
+                      <p className="text-xs text-slate-500">Honor gaji petugas security malam @ Rp 2.000.000/bulan</p>
                     </div>
-                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseGajiPeriod1 + expenseGajiPeriod2)}</span>
+                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseGajiPeriod1 + expenseGajiPeriod2 + expenseGajiPeriod3 + expenseGajiPeriod4)}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
                     <div>
-                      <p className="font-bold text-slate-900 text-sm">c. Perawatan Taman & Penerangan Lampu</p>
-                      <p className="text-xs text-slate-500">Pengecatan taman (538k) & 14 item instalasi lampu taman (2.344.500)</p>
+                      <p className="font-bold text-slate-900 text-sm">c. Perawatan Taman & Penerangan Lampu Lingkungan</p>
+                      <p className="text-xs text-slate-500">Pengecatan taman (538k), instalasi lampu taman (2.344.500), & lampu jalan C1–C8 (890k)</p>
                     </div>
-                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseTamanPeriod1 + expenseLampuTamanPeriod2)}</span>
+                    <span className="font-mono font-black text-rose-700">{formatRupiah(expenseTamanPeriod1 + expenseLampuTamanPeriod2 + expenseLampuJalanPeriod3)}</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-between items-center">
                     <div>
@@ -2035,14 +2279,14 @@ _Pengurus Green Bussan Village_`,
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-emerald-600" />
-                Ringkasan Penerimaan Iuran Per Bulan (Januari - Agustus 2026)
+                Ringkasan Penerimaan Iuran Per Bulan (Januari - Oktober 2026)
               </h3>
               <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                 Total Masuk: {formatRupiah(totalCollectedAll)}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 pt-1">
               {[
                 { label: 'Jan-26', val: monthlyTotals.jan, count: monthlyPaidHouseCounts.jan },
                 { label: 'Feb-26', val: monthlyTotals.feb, count: monthlyPaidHouseCounts.feb },
@@ -2052,9 +2296,20 @@ _Pengurus Green Bussan Village_`,
                 { label: 'Jun-26', val: monthlyTotals.jun, count: monthlyPaidHouseCounts.jun },
                 { label: 'Jul-26', val: monthlyTotals.jul, count: monthlyPaidHouseCounts.jul },
                 { label: 'Agu-26', val: monthlyTotals.aug, count: monthlyPaidHouseCounts.aug },
+                { label: 'Sep-26', val: monthlyTotals.sep, count: monthlyPaidHouseCounts.sep },
+                { label: 'Okt-26', val: monthlyTotals.oct, count: monthlyPaidHouseCounts.oct },
               ].map((m) => (
-                <div key={m.label} className="bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center">
-                  <p className="text-[11px] font-bold text-slate-600">{m.label}</p>
+                <div
+                  key={m.label}
+                  className={`border rounded-xl p-2 text-center ${
+                    m.label === 'Okt-26'
+                      ? 'bg-emerald-50/70 border-emerald-300'
+                      : 'bg-slate-50 border-slate-200/80'
+                  }`}
+                >
+                  <p className={`text-[11px] font-bold ${m.label === 'Okt-26' ? 'text-emerald-800' : 'text-slate-600'}`}>
+                    {m.label}
+                  </p>
                   <p className="text-xs sm:text-sm font-black text-emerald-700 mt-0.5">{formatRupiah(m.val)}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">{m.count} / 43 Rumah</p>
                 </div>
@@ -2126,13 +2381,16 @@ _Pengurus Green Bussan Village_`,
           {/* Matrix Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="p-3 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2 font-semibold text-slate-700">
+              <div className="flex flex-wrap items-center gap-2 font-semibold text-slate-700">
                 <span>Keterangan Status Iuran:</span>
                 <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-mono font-bold text-[10px]">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> 100k = Lunas
                 </span>
                 <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-0.5 rounded-md font-mono font-bold text-[10px] border border-rose-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span> - = Belum Bayar
+                </span>
+                <span className="inline-flex items-center gap-1 bg-slate-800 text-slate-200 px-2 py-0.5 rounded-md font-mono font-bold text-[10px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Kosong / Belum Ditagih
                 </span>
               </div>
               <span className="text-slate-500 text-[11px]">Total 43 Rumah Terdaftar</span>
@@ -2151,7 +2409,9 @@ _Pengurus Green Bussan Village_`,
                     <th className="py-3 px-2 text-center">Mei-26</th>
                     <th className="py-3 px-2 text-center">Jun-26</th>
                     <th className="py-3 px-2 text-center">Jul-26</th>
-                    <th className="py-3 px-2 text-center bg-emerald-950 text-emerald-300">Agu-26</th>
+                    <th className="py-3 px-2 text-center">Agu-26</th>
+                    <th className="py-3 px-2 text-center">Sep-26</th>
+                    <th className="py-3 px-2 text-center bg-emerald-950 text-emerald-300">Okt-26</th>
                     <th className="py-3 px-3 text-right">Rekap Iuran</th>
                     <th className="py-3 px-3 text-right">Tunggakan</th>
                     <th className="py-3 px-4">Keterangan</th>
@@ -2167,7 +2427,9 @@ _Pengurus Green Bussan Village_`,
                     <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.may)}</td>
                     <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.jun)}</td>
                     <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.jul)}</td>
-                    <td className="py-2.5 px-2 text-center font-mono text-emerald-200">{formatRupiah(monthlyTotals.aug)}</td>
+                    <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.aug)}</td>
+                    <td className="py-2.5 px-2 text-center font-mono">{formatRupiah(monthlyTotals.sep)}</td>
+                    <td className="py-2.5 px-2 text-center font-mono text-emerald-200">{formatRupiah(monthlyTotals.oct)}</td>
                     <td className="py-2.5 px-3 text-right font-mono font-black text-white">
                       {formatRupiah(totalCollectedAll)}
                     </td>
@@ -2197,13 +2459,18 @@ _Pengurus Green Bussan Village_`,
                       </td>
 
                       {/* Month Badges */}
-                      {(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug'] as const).map((m) => {
+                      {(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct'] as const).map((m) => {
                         const paid = row.payments[m];
+                        const isExcluded = row.excludedMonths?.includes(m);
                         return (
-                          <td key={m} className={`py-2.5 px-2 text-center ${m === 'aug' ? 'bg-emerald-50/40' : ''}`}>
+                          <td key={m} className={`py-2.5 px-2 text-center ${m === 'oct' ? 'bg-emerald-50/40' : ''}`}>
                             {paid ? (
                               <span className="inline-block bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-mono font-bold text-[10px]" title={`Rp ${paid.toLocaleString('id-ID')}`}>
                                 100k
+                              </span>
+                            ) : isExcluded ? (
+                              <span className="inline-block bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono font-bold text-[10px]" title="Kosong / Belum Ditagih">
+                                -
                               </span>
                             ) : (
                               <span className="inline-block bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded border border-rose-200 font-mono font-bold text-[10px]" title="Belum Bayar">
@@ -2326,7 +2593,9 @@ _Pengurus Green Bussan Village_`,
                     </td>
                     <td className="py-3.5 px-4">
                       <p className="font-bold text-slate-900">
-                        {selectedPeriod === 'period3'
+                        {selectedPeriod === 'period4'
+                          ? 'Saldo Kas Awal Periode 4 (Sisa Kas Periode 15 September - 17 Oktober 2026)'
+                          : selectedPeriod === 'period3'
                           ? 'Saldo Kas Awal Periode 3 (Sisa Kas Periode 15 Agustus - 14 September 2026)'
                           : selectedPeriod === 'period2'
                           ? 'Saldo Kas Awal Periode 2 (Sisa Kas Periode 14 Juli - 14 Agustus 2026)'
